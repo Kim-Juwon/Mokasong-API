@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 위 코드가 mapper 설정을 하는 코드 -->
+
+<!-- Mapper를 사용하는 Repository의 전체 경로를 적어줘야함. -->
+<mapper namespace="com.mokasong.repository.UserMapper">
+    <insert id="createUser" parameterType="com.mokasong.domain.user.User" useGeneratedKeys="true" keyProperty="user_id">
+        INSERT INTO users
+        (email, password, phone_number, address, authority, name, last_logged_at, is_deleted, created_at, updated_at, register_token)
+        VALUES(#{email}, #{password}, #{phone_number}, #{address}, #{authority}, #{name}, #{last_logged_at}, #{is_deleted}, #{created_at}, #{updated_at}, #{register_token})
+    </insert>
+
+    <select id="getUserById" resultType="com.mokasong.domain.user.User">
+        SELECT *
+        FROM users
+        WHERE user_id = #{userId}
+    </select>
+
+    <select id="getUserByEmail" resultType="com.mokasong.domain.user.User">
+        SELECT *
+        FROM users
+        WHERE email = #{email}
+    </select>
+
+    <select id="getUserByPhoneNumber" resultType="com.mokasong.domain.user.User">
+        SELECT *
+        FROM users
+        WHERE phone_number = #{phoneNumber}
+    </select>
+
+    <select id="getUserByName" resultType="com.mokasong.domain.user.User">
+        SELECT *
+        FROM users
+        WHERE name = #{name}
+    </select>
+
+    <select id="getUserByNameAndPhoneNumber" resultType="com.mokasong.domain.user.User">
+        SELECT *
+        FROM users
+        WHERE name = #{name} AND phone_number = #{phoneNumber}
+    </select>
+
+    <select id="getUserByNameAndEmail" resultType="com.mokasong.domain.user.User">
+        SELECT *
+        FROM users
+        WHERE name = #{name} AND email = #{email}
+    </select>
+
+    <select id="getUserByRegisterToken" resultType="com.mokasong.domain.user.User">
+        SELECT *
+        FROM users
+        WHERE register_token = #{registerToken}
+    </select>
+
+    <select id="getUserIdByEmail" resultType="_long">
+        SELECT user_id
+        FROM users
+        WHERE email = #{email}
+    </select>
+
+    <update id="updateUser" parameterType="com.mokasong.domain.user.User">
+        UPDATE users
+        SET
+            email = #{email},
+            password = #{password},
+            phone_number = #{phone_number},
+            address = #{address},
+            authority = #{authority},
+            name = #{name},
+            last_logged_at = #{last_logged_at},
+            is_deleted = #{is_deleted},
+            created_at = #{created_at},
+            updated_at = #{updated_at},
+            register_token = #{register_token}
+        WHERE user_id = #{user_id}
+    </update>
+
+    <delete id="deleteUser">
+        DELETE
+        FROM users
+        WHERE user_id = #{userId}
+    </delete>
+</mapper>
