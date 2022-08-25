@@ -1,6 +1,8 @@
 package com.mokasong.controller.user;
 
+import com.mokasong.annotation.NonAuth;
 import com.mokasong.annotation.ValidationGroups;
+import com.mokasong.annotation.XssPrevent;
 import com.mokasong.domain.user.User;
 import com.mokasong.domain.user.UserForVerification;
 import com.mokasong.response.BaseResponse;
@@ -26,6 +28,7 @@ public class UserRegisterController {
         this.userRegisterService = userRegisterService;
     }
 
+    @NonAuth
     @GetMapping("/existence/email/{email}")
     @ApiOperation(value = "이메일 중복 확인", notes = "이메일이 회원 정보에 이미 존재하는지 확인합니다.")
     public ResponseEntity<BaseResponse> getExistenceOfEmail(
@@ -36,6 +39,7 @@ public class UserRegisterController {
         return new ResponseEntity<>(userRegisterService.getExistenceOfEmail(email), HttpStatus.OK);
     }
 
+    @NonAuth
     @GetMapping("/existence/phone-number/{phone-number}")
     @ApiOperation(value = "휴대전화번호 중복 확인", notes = "휴대전화번호가 회원 정보에 이미 존재하는지 확인합니다.")
     public ResponseEntity<BaseResponse> getExistenceOfPhoneNumber(
@@ -46,6 +50,8 @@ public class UserRegisterController {
         return new ResponseEntity<>(userRegisterService.getExistenceOfPhoneNumber(phoneNumber), HttpStatus.OK);
     }
 
+    @NonAuth
+    @XssPrevent
     @PostMapping("/user/phone-number/verification-code/send")
     @ApiOperation(value = "휴대전화 인증번호 발송", notes = "휴대전화 인증번호를 발송합니다.")
     public ResponseEntity<BaseResponse> sendVerificationCodeForPhoneNumber(
@@ -56,6 +62,8 @@ public class UserRegisterController {
         return new ResponseEntity<>(userRegisterService.sendVerificationCodeForPhoneNumber(phoneNumber), HttpStatus.OK);
     }
 
+    @NonAuth
+    @XssPrevent
     @PostMapping("/user/phone-number/verification-code/check")
     @ApiOperation(value = "휴대전화 인증번호 확인", notes = "휴대전화 인증번호를 확인합니다.")
     public ResponseEntity<BaseResponse> checkVerificationCodeForPhoneNumber(
@@ -65,6 +73,8 @@ public class UserRegisterController {
         return new ResponseEntity<>(userRegisterService.checkVerificationCodeForPhoneNumber(userInRequest), HttpStatus.OK);
     }
 
+    @NonAuth
+    @XssPrevent
     @PostMapping("/user/register/stand-by")
     @ApiOperation(value = "회원가입 대기 상태로 전환", notes = "회원가입 대기 상태로 전환합니다.")
     public ResponseEntity<BaseResponse> changeToStandingByRegister(

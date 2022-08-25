@@ -8,8 +8,8 @@
 <mapper namespace="com.mokasong.repository.UserMapper">
     <insert id="createUser" parameterType="com.mokasong.domain.user.User" useGeneratedKeys="true" keyProperty="user_id">
         INSERT INTO users
-        (email, password, phone_number, address, authority, name, last_logged_at, is_deleted, created_at, updated_at, register_token)
-        VALUES(#{email}, #{password}, #{phone_number}, #{address}, #{authority}, #{name}, #{last_logged_at}, #{is_deleted}, #{created_at}, #{updated_at}, #{register_token})
+        (email, password, phone_number, address, authority, name, last_login_time, last_logout_time, register_token, is_deleted, created_at, updated_at)
+        VALUES(#{email}, #{password}, #{phone_number}, #{address}, #{authority}, #{name}, #{last_login_time}, #{last_logout_time}, #{register_token}, #{is_deleted}, #{created_at}, #{updated_at})
     </insert>
 
     <select id="getUserById" resultType="com.mokasong.domain.user.User">
@@ -54,6 +54,12 @@
         WHERE register_token = #{registerToken}
     </select>
 
+    <select id="getUserBySecretKey" resultType="com.mokasong.domain.user.User">
+        SELECT *
+        FROM users
+        WHERE secret_key = #{secretKey}
+    </select>
+
     <select id="getUserIdByEmail" resultType="_long">
         SELECT user_id
         FROM users
@@ -69,11 +75,12 @@
             address = #{address},
             authority = #{authority},
             name = #{name},
-            last_logged_at = #{last_logged_at},
+            last_login_time = #{last_login_time},
+            last_logout_time = #{last_logout_time},
+            register_token = #{register_token},
             is_deleted = #{is_deleted},
             created_at = #{created_at},
-            updated_at = #{updated_at},
-            register_token = #{register_token}
+            updated_at = #{updated_at}
         WHERE user_id = #{user_id}
     </update>
 

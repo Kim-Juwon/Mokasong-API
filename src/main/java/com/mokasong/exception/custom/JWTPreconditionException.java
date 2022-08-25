@@ -4,7 +4,7 @@ import com.mokasong.exception.CustomExceptionList;
 import com.mokasong.exception.NonCriticalException;
 
 public class JWTPreconditionException extends NonCriticalException {
-    public JWTPreconditionException(CustomExceptionList customExceptionList) {
-        super(customExceptionList.getMessage(), customExceptionList.getErrorCode(), customExceptionList.getHttpStatusCode());
+    public JWTPreconditionException(CustomExceptionList exception) {
+        super(exception.getMessage(), exception.getErrorCode(), exception.getHttpStatusCode());
     }
 }

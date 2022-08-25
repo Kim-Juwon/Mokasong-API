@@ -9,4 +9,6 @@ public class ValidationGroups {
     public interface SendVerificationCodeForFindEmail {};
     public interface CheckVerificationCodeForFindEmail {};
     public interface SendVerificationCodeForFindPassword {};
+
+    public interface Login {};
 }
