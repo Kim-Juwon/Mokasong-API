@@ -1,11 +1,13 @@
 package com.mokasong.util;
 
 import com.auth0.jwt.JWT;
-import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.mokasong.domain.user.User;
 import com.mokasong.exception.custom.JWTPreconditionException;
-import org.springframework.beans.factory.annotation.Value;
+import com.mokasong.repository.UserMapper;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -14,61 +16,32 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.Calendar;
 import java.util.Date;
 
-import static com.mokasong.exception.CustomExceptionList.TOKEN_NOT_CONTAIN_BEARER;
-import static com.mokasong.exception.CustomExceptionList.TOKEN_NOT_EXIST_IN_REQUEST;
+import static com.mokasong.exception.CustomExceptionList.*;
 
 @Component
 public class JwtHandler {
-    @Value("${jwt.user-authorization-secret-key}")
-    private String USER_AUTHORIZATION_SECRET_KEY;
+    private final String secretKey;
 
-    @Value("${jwt.user-registration-precondition-check-secret-key}")
-    private String USER_REGISTRATION_PRECONDITION_CHECK_SECRET_KEY;
+    public JwtHandler() {
+        secretKey = RandomStringUtils.randomAlphanumeric(300);
+    }
 
-    @Value("${jwt.message-service-secret-key}")
-    private String MESSAGE_SERVICE_SECRET_KEY;
-
-    /**
-     *  휴대전화번호 인증시, 인증번호가 맞는지 판별하는데에 사용되는 JWT 생성
-     */
-    public String generateTokenForPhoneNumberVerification(String phoneNumber, int expirationMinute) throws Exception {
-        Algorithm algorithm = Algorithm.HMAC256(MESSAGE_SERVICE_SECRET_KEY);
+    public String generateToken(Long userId, int hour) throws Exception {
+        Algorithm algorithm = Algorithm.HMAC256(this.secretKey);
 
         return JWT.create()
-                .withExpiresAt(getExpirationTime(Calendar.MINUTE, expirationMinute))
-                .withClaim("phone_number", phoneNumber)
+                .withExpiresAt(getExpirationTime(Calendar.HOUR, hour))
+                .withClaim("userId", userId)
                 .sign(algorithm);
     }
 
-    /**
-     *  generateTokenForPhoneNumberVerification()에서 발급된 토큰이 유효한지 판별하고 decondig된 내용(DecodedJWT 객체)을 리턴
-     */
-    public DecodedJWT getDecodedTokenForPhoneNumberVerification(String token) throws Exception {
-        Algorithm algorithm = Algorithm.HMAC256(MESSAGE_SERVICE_SECRET_KEY);
-        JWTVerifier verifier = JWT.require(algorithm).build();
+    public Long discoverUserId(String token) throws Exception {
+        Algorithm algorithm = Algorithm.HMAC256(this.secretKey);
+        DecodedJWT decodedJWT = JWT.require(algorithm).build().verify(token);
 
-        return verifier.verify(token);
-    }
+        Long userId = decodedJWT.getClaim("userId").asLong();
 
-    /**
-     *  회원가입 버튼 누를 시, 그 전에 전화번호 인증이 확인되었는지 판별하는데 사용되는 JWT 생성
-     */
-    public String generateTokenForRegistrationPreconditionCheck(String registrationPreconditionCode) {
-        Algorithm algorithm = Algorithm.HMAC256(USER_REGISTRATION_PRECONDITION_CHECK_SECRET_KEY);
-
-        return JWT.create()
-                .withClaim("precondition_registration_code", registrationPreconditionCode)
-                .sign(algorithm);
-    }
-
-    /**
-     *  generateTokenForPreconditionRegisterCheck()에서 발급된 토큰이 유효한지 판별하고 decondig된 내용(DecodedJWT 객체)을 리턴
-     */
-    public DecodedJWT getDecodedTokenForPreconditionRegistrationCheck(String token) throws Exception {
-        Algorithm algorithm = Algorithm.HMAC256(USER_REGISTRATION_PRECONDITION_CHECK_SECRET_KEY);
-        JWTVerifier verifier = JWT.require(algorithm).build();
-
-        return verifier.verify(token);
+        return userId;
     }
 
     /**
@@ -88,7 +61,7 @@ public class JwtHandler {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
         String token = request.getHeader("Authorization");
 
-        // 헤더에 Authorization에 대한 값이 없을 경우 Exception을 throw
+        // 헤더에 Authorization에 대한 값이 없을 경우
         if (token == null) {
             throw new JWTPreconditionException(TOKEN_NOT_EXIST_IN_REQUEST);
         }

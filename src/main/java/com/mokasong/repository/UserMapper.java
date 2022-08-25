@@ -13,6 +13,7 @@ public interface UserMapper {
     User getUserByNameAndPhoneNumber(String name, String phoneNumber);
     User getUserByNameAndEmail(String name, String email);
     User getUserByRegisterToken(String registerToken);
+    User getUserBySecretKey(String secretKey);
     Long getUserIdByEmail(String email);
     void updateUser(User user);
     void deleteUser(Long userId);

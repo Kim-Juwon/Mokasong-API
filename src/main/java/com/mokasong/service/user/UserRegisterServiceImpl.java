@@ -3,7 +3,7 @@ package com.mokasong.service.user;
 import com.mokasong.domain.user.User;
 import com.mokasong.domain.user.UserForVerification;
 import com.mokasong.exception.CustomExceptionList;
-import com.mokasong.exception.custom.RegisterFailException;
+import com.mokasong.exception.custom.UserRegisterFailException;
 import com.mokasong.exception.custom.VerificationCodeException;
 import com.mokasong.repository.UserMapper;
 import com.mokasong.response.BaseResponse;
@@ -72,7 +72,7 @@ public class UserRegisterServiceImpl implements UserRegisterService {
             CustomExceptionList phoneNumberAlreadyExist = PHONE_NUMBER_ALREADY_EXIST
                     .setMessage(String.format("%s 이메일로 이미 가입된 계정의 전화번호입니다.", StringHandler.hideIdOfEmail(user.getEmail())));
 
-            throw new RegisterFailException(phoneNumberAlreadyExist);
+            throw new UserRegisterFailException(phoneNumberAlreadyExist);
         }
 
         String verificationCode = RandomStringUtils.randomNumeric(6);
@@ -119,28 +119,28 @@ public class UserRegisterServiceImpl implements UserRegisterService {
     public BaseResponse changeToStandingByRegister(User user, String verificationToken) throws Exception {
         String phoneNumber = user.getPhone_number();
         if (this.phoneNumberExist(phoneNumber)) {
-            throw new RegisterFailException(PHONE_NUMBER_ALREADY_EXIST);
+            throw new UserRegisterFailException(PHONE_NUMBER_ALREADY_EXIST);
         }
 
         String email = user.getEmail();
         if (this.emailExist(email)) {
-            throw new RegisterFailException(EMAIL_ALREADY_EXIST);
+            throw new UserRegisterFailException(EMAIL_ALREADY_EXIST);
         }
 
         String verificationTokenInRedisServer = redisClient.getString(RedisCategory.CHANGE_TO_STAND_BY_REGULAR, phoneNumber);
         if (verificationTokenInRedisServer == null) {
-            throw new RegisterFailException(REQUEST_TIME_EXPIRE_OR_DATA_COUNTERFEIT_DETECTED);
+            throw new UserRegisterFailException(REQUEST_TIME_EXPIRE_OR_DATA_COUNTERFEIT_DETECTED);
         }
         if (!verificationTokenInRedisServer.equals(verificationToken)) {
-            throw new RegisterFailException(VERIFICATION_TOKEN_NOT_EQUAL);
+            throw new UserRegisterFailException(VERIFICATION_TOKEN_NOT_EQUAL);
         }
 
         String registerToken;
-        User selectedUser;
+        User selectedUserByRegisterToken;
         do {
             registerToken = RandomStringUtils.randomAlphanumeric(200);
-            selectedUser = userMapper.getUserByRegisterToken(registerToken);
-        } while (selectedUser != null);
+            selectedUserByRegisterToken = userMapper.getUserByRegisterToken(registerToken);
+        } while (selectedUserByRegisterToken != null);
 
         user.initializeForStandingByRegister(registerToken);
         userMapper.createUser(user);
@@ -164,11 +164,10 @@ public class UserRegisterServiceImpl implements UserRegisterService {
         User user = userMapper.getUserByRegisterToken(registerToken);
 
         if (user == null) {
-            throw new RegisterFailException(INVALID_ACCESS);
+            throw new UserRegisterFailException(INVALID_ACCESS);
         }
 
         user.changeAuthorityToRegular();
-
         userMapper.updateUser(user);
     }
 

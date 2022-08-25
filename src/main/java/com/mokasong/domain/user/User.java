@@ -19,11 +19,13 @@ public class User {
     @ApiModelProperty(hidden = true)
     private Long user_id;
 
-    @Email(groups = ValidationGroups.ChangeToStandingByRegister.class, message = "이메일 형식이어야 합니다.")
+    @Email(groups = {ValidationGroups.ChangeToStandingByRegister.class,
+            ValidationGroups.Login.class}, message = "이메일 형식이어야 합니다.")
     @NotBlank(groups = ValidationGroups.ChangeToStandingByRegister.class, message = "이메일은 필수입니다.")
     private String email;
 
-    @NotBlank(groups = {ValidationGroups.ChangeToStandingByRegister.class}, message = "비밀번호는 필수입니다.")
+    @NotBlank(groups = {ValidationGroups.ChangeToStandingByRegister.class,
+            ValidationGroups.Login.class}, message = "비밀번호는 필수입니다.")
     private String password;
 
     @NotBlank(groups = {ValidationGroups.ChangeToStandingByRegister.class}, message = "휴대전화번호는 필수입니다.")
@@ -44,7 +46,13 @@ public class User {
     private String name;
 
     @ApiModelProperty(hidden = true)
-    private Date last_logged_at;
+    private Date last_login_time;
+
+    @ApiModelProperty(hidden = true)
+    private Date last_logout_time;
+
+    @ApiModelProperty(hidden = true)
+    private String register_token;
 
     @ApiModelProperty(hidden = true)
     private Boolean is_deleted;
@@ -56,27 +64,27 @@ public class User {
     @ApiModelProperty(hidden = true)
     private Date updated_at;
 
-    @ApiModelProperty(hidden = true)
-    private String register_token;
-
     // 회원가입 대기 상태로 전환
     public void initializeForStandingByRegister(String registerToken) {
         this.password = BCrypt.hashpw(this.password, BCrypt.gensalt());
         this.authority = Authority.STAND_BY_REGISTER;
+        this.register_token = registerToken;
         this.is_deleted = false;
         this.created_at = new Date();
         this.updated_at = new Date();
-        this.register_token = registerToken;
     }
 
     // 회원가입 대기 상태에서 정식 회원으로 전환
     public void changeAuthorityToRegular() {
         this.authority = Authority.REGULAR;
         this.updated_at = new Date();
-        this.register_token = null;
     }
 
-    public void setUser_id(Long user_id) {
-        this.user_id = user_id;
+    public void changeLastLoginTime() {
+        this.last_login_time = new Date();
+    }
+
+    public void changeLastLogoutTime() {
+        this.last_logout_time = new Date();
     }
 }

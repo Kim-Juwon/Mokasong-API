@@ -8,8 +8,8 @@ import com.mokasong.exception.NonCriticalException;
  */
 
 public class VerificationCodeException extends NonCriticalException {
-    public VerificationCodeException(CustomExceptionList customExceptionlist) {
-        super(customExceptionlist.getMessage(), customExceptionlist.getErrorCode(), customExceptionlist.getHttpStatusCode());
+    public VerificationCodeException(CustomExceptionList exception) {
+        super(exception.getMessage(), exception.getErrorCode(), exception.getHttpStatusCode());
     }
 }
 
