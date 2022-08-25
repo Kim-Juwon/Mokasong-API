@@ -1,7 +1,8 @@
 package com.mokasong.service.user;
 
 import com.mokasong.domain.user.User;
-import com.mokasong.domain.user.UserForVerification;
+import com.mokasong.dto.user.UserRegisterDto;
+import com.mokasong.dto.user.VerificationCodeCheckDto;
 import com.mokasong.exception.CustomExceptionList;
 import com.mokasong.exception.custom.UserRegisterFailException;
 import com.mokasong.exception.custom.VerificationCodeException;
@@ -90,9 +91,9 @@ public class UserRegisterServiceImpl implements UserRegisterService {
     }
 
     @Override
-    public BaseResponse checkVerificationCodeForPhoneNumber(UserForVerification userInRequest) throws Exception {
-        String phoneNumber = userInRequest.getPhone_number();
-        String verificationCode = userInRequest.getVerification_code();
+    public BaseResponse checkVerificationCodeForPhoneNumber(VerificationCodeCheckDto verificationCodeCheckDto) throws Exception {
+        String phoneNumber = verificationCodeCheckDto.getPhone_number();
+        String verificationCode = verificationCodeCheckDto.getVerification_code();
 
         String verificationCodeInRedisServer = redisClient.getString(RedisCategory.REGISTER_CELLPHONE, phoneNumber);
 
@@ -116,13 +117,13 @@ public class UserRegisterServiceImpl implements UserRegisterService {
 
     @Override
     @Transactional
-    public BaseResponse changeToStandingByRegister(User user, String verificationToken) throws Exception {
-        String phoneNumber = user.getPhone_number();
+    public BaseResponse changeToStandingByRegister(UserRegisterDto userRegisterDto) throws Exception {
+        String phoneNumber = userRegisterDto.getPhone_number();
         if (this.phoneNumberExist(phoneNumber)) {
             throw new UserRegisterFailException(PHONE_NUMBER_ALREADY_EXIST);
         }
 
-        String email = user.getEmail();
+        String email = userRegisterDto.getEmail();
         if (this.emailExist(email)) {
             throw new UserRegisterFailException(EMAIL_ALREADY_EXIST);
         }
@@ -131,7 +132,7 @@ public class UserRegisterServiceImpl implements UserRegisterService {
         if (verificationTokenInRedisServer == null) {
             throw new UserRegisterFailException(REQUEST_TIME_EXPIRE_OR_DATA_COUNTERFEIT_DETECTED);
         }
-        if (!verificationTokenInRedisServer.equals(verificationToken)) {
+        if (!verificationTokenInRedisServer.equals(userRegisterDto.getVerification_token())) {
             throw new UserRegisterFailException(VERIFICATION_TOKEN_NOT_EQUAL);
         }
 
@@ -142,7 +143,8 @@ public class UserRegisterServiceImpl implements UserRegisterService {
             selectedUserByRegisterToken = userMapper.getUserByRegisterToken(registerToken);
         } while (selectedUserByRegisterToken != null);
 
-        user.initializeForStandingByRegister(registerToken);
+        User user = new User();
+        user.initializeForStandingByRegister(userRegisterDto, registerToken);
         userMapper.createUser(user);
 
         // TODO: 실제 배포시에는 real host로 바꿀것

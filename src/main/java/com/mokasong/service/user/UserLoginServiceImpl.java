@@ -1,6 +1,7 @@
 package com.mokasong.service.user;
 
 import com.mokasong.domain.user.User;
+import com.mokasong.dto.user.LoginDto;
 import com.mokasong.exception.custom.UserLoginFailException;
 import com.mokasong.exception.custom.UserLogoutException;
 import com.mokasong.repository.UserMapper;
@@ -30,14 +31,14 @@ public class UserLoginServiceImpl implements UserLoginService {
     }
     @Override
     @Transactional
-    public BaseResponse login(User user) throws Exception {
-        User selectedUser = userMapper.getUserByEmail(user.getEmail());
+    public BaseResponse login(LoginDto loginDto) throws Exception {
+        User selectedUser = userMapper.getUserByEmail(loginDto.getEmail());
 
         if (selectedUser == null) {
             throw new UserLoginFailException(USER_NOT_EXIST);
         }
         if ((selectedUser.getIs_deleted()) ||
-                (!this.passwordValid(user.getPassword(), selectedUser.getPassword()))) {
+                (!this.passwordValid(loginDto.getPassword(), selectedUser.getPassword()))) {
             throw new UserLoginFailException(USER_NOT_EXIST);
         }
 

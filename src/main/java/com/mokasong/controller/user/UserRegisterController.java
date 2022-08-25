@@ -1,10 +1,10 @@
 package com.mokasong.controller.user;
 
 import com.mokasong.annotation.NonAuth;
-import com.mokasong.annotation.ValidationGroups;
+import com.mokasong.annotation.ValidationGroups.*;
 import com.mokasong.annotation.XssPrevent;
-import com.mokasong.domain.user.User;
-import com.mokasong.domain.user.UserForVerification;
+import com.mokasong.dto.user.UserRegisterDto;
+import com.mokasong.dto.user.VerificationCodeCheckDto;
 import com.mokasong.response.BaseResponse;
 import com.mokasong.service.user.UserRegisterService;
 import io.swagger.annotations.ApiOperation;
@@ -74,9 +74,9 @@ public class UserRegisterController {
     @ApiOperation(value = "휴대전화 인증번호 확인", notes = "휴대전화 인증번호를 확인합니다.")
     public ResponseEntity<BaseResponse> checkVerificationCodeForPhoneNumber(
             @RequestBody
-            @Validated(ValidationGroups.CheckVerificationCodeForPhoneNumber.class)
-            UserForVerification userInRequest) throws Exception {
-        return new ResponseEntity<>(userRegisterService.checkVerificationCodeForPhoneNumber(userInRequest), HttpStatus.OK);
+            @Validated(CheckVerificationCodeForPhoneNumber.class)
+            VerificationCodeCheckDto verificationCodeCheckDto) throws Exception {
+        return new ResponseEntity<>(userRegisterService.checkVerificationCodeForPhoneNumber(verificationCodeCheckDto), HttpStatus.OK);
     }
 
     @NonAuth
@@ -85,11 +85,9 @@ public class UserRegisterController {
     @PostMapping("/user/register/stand-by")
     @ApiOperation(value = "회원가입 대기 상태로 전환", notes = "회원가입 대기 상태로 전환합니다.")
     public ResponseEntity<BaseResponse> changeToStandingByRegister(
-            @RequestParam("verification_token")
-            String verificationToken,
             @RequestBody
-            @Validated(ValidationGroups.ChangeToStandingByRegister.class)
-            User user) throws Exception {
-        return new ResponseEntity<>(userRegisterService.changeToStandingByRegister(user, verificationToken), HttpStatus.OK);
+            @Validated(ChangeToStandingByRegister.class)
+            UserRegisterDto userRegisterDto) throws Exception {
+        return new ResponseEntity<>(userRegisterService.changeToStandingByRegister(userRegisterDto), HttpStatus.OK);
     }
 }

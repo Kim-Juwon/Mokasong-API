@@ -2,9 +2,9 @@ package com.mokasong.controller.user;
 
 import com.mokasong.annotation.Auth;
 import com.mokasong.annotation.NonAuth;
-import com.mokasong.annotation.ValidationGroups;
+import com.mokasong.annotation.ValidationGroups.*;
 import com.mokasong.annotation.XssPrevent;
-import com.mokasong.domain.user.User;
+import com.mokasong.dto.user.LoginDto;
 import com.mokasong.response.BaseResponse;
 import com.mokasong.service.user.UserLoginService;
 import io.swagger.annotations.ApiOperation;
@@ -36,8 +36,8 @@ public class UserLoginController {
     @Tag(name = "로그인/회원가입")
     @PostMapping("/user/login")
     @ApiOperation(value = "로그인", notes = "로그인합니다.")
-    public ResponseEntity<BaseResponse> login(@RequestBody @Validated(ValidationGroups.Login.class) User user) throws Exception {
-        return new ResponseEntity<>(userLoginService.login(user), HttpStatus.OK);
+    public ResponseEntity<BaseResponse> login(@RequestBody @Validated(Login.class) LoginDto loginDto) throws Exception {
+        return new ResponseEntity<>(userLoginService.login(loginDto), HttpStatus.OK);
     }
 
     @Auth({REGULAR, ADMIN})
