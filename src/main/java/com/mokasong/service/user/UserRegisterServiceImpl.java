@@ -172,10 +172,22 @@ public class UserRegisterServiceImpl implements UserRegisterService {
     }
 
     private boolean emailExist(String email) {
-        return userMapper.getUserByEmail(email) != null;
+        User user = userMapper.getUserByEmail(email);
+
+        if ((user == null) || (user.getIs_deleted())) {
+            return false;
+        }
+
+        return true;
     }
 
     private boolean phoneNumberExist(String phoneNumber) {
-        return userMapper.getUserByPhoneNumber(phoneNumber) != null;
+        User user = userMapper.getUserByPhoneNumber(phoneNumber);
+
+        if ((user == null) || (user.getIs_deleted())) {
+            return false;
+        }
+
+        return true;
     }
 }

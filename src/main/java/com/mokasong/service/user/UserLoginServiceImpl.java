@@ -36,9 +36,8 @@ public class UserLoginServiceImpl implements UserLoginService {
         if (selectedUser == null) {
             throw new UserLoginFailException(USER_NOT_EXIST);
         }
-        if ((selectedUser.getIs_deleted().equals(true)) ||
-                (selectedUser.getAuthority() == Authority.STAND_BY_REGISTER) ||
-                !this.passwordValid(user.getPassword(), selectedUser.getPassword())) {
+        if ((selectedUser.getIs_deleted()) ||
+                (!this.passwordValid(user.getPassword(), selectedUser.getPassword()))) {
             throw new UserLoginFailException(USER_NOT_EXIST);
         }
 
