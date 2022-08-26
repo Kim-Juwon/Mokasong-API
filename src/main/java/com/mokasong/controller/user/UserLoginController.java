@@ -3,7 +3,6 @@ package com.mokasong.controller.user;
 import com.mokasong.annotation.Auth;
 import com.mokasong.annotation.NoAuth;
 import com.mokasong.annotation.ValidationGroups.*;
-import com.mokasong.annotation.XssPrevent;
 import com.mokasong.dto.user.LoginDto;
 import com.mokasong.response.BaseResponse;
 import com.mokasong.service.user.UserLoginService;
@@ -32,7 +31,6 @@ public class UserLoginController {
     }
 
     @NoAuth
-    @XssPrevent
     @Tag(name = "로그인/로그아웃")
     @PostMapping("/user/login")
     @ApiOperation(value = "로그인", notes = "로그인합니다.")
@@ -41,7 +39,6 @@ public class UserLoginController {
     }
 
     @Auth({REGULAR, ADMIN})
-    @XssPrevent
     @Tag(name = "로그인/로그아웃")
     @PostMapping("/user/logout")
     @ApiOperation(value = "로그아웃", notes = "로그아웃", authorizations = @Authorization(value = "Authorization"))

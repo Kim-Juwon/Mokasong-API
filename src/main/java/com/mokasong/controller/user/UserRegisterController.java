@@ -2,7 +2,6 @@ package com.mokasong.controller.user;
 
 import com.mokasong.annotation.NoAuth;
 import com.mokasong.annotation.ValidationGroups.*;
-import com.mokasong.annotation.XssPrevent;
 import com.mokasong.dto.user.UserRegisterDto;
 import com.mokasong.dto.user.VerificationCodeCheckDto;
 import com.mokasong.response.BaseResponse;
@@ -55,7 +54,6 @@ public class UserRegisterController {
     }
 
     @NoAuth
-    @XssPrevent
     @Tag(name = "회원가입")
     @PostMapping("/user/phone-number/verification-code/send")
     @ApiOperation(value = "휴대전화 인증번호 발송", notes = "휴대전화 인증번호를 발송합니다.")
@@ -68,7 +66,6 @@ public class UserRegisterController {
     }
 
     @NoAuth
-    @XssPrevent
     @Tag(name = "회원가입")
     @PostMapping("/user/phone-number/verification-code/check")
     @ApiOperation(value = "휴대전화 인증번호 확인", notes = "휴대전화 인증번호를 확인합니다.")
@@ -80,7 +77,6 @@ public class UserRegisterController {
     }
 
     @NoAuth
-    @XssPrevent
     @Tag(name = "회원가입")
     @PostMapping("/user/register/stand-by")
     @ApiOperation(value = "회원가입 대기 상태로 전환", notes = "회원가입 대기 상태로 전환합니다.")

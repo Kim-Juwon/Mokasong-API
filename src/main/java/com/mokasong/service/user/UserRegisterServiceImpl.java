@@ -65,9 +65,9 @@ public class UserRegisterServiceImpl implements UserRegisterService {
         }});
     }
 
-    // TODO: 만료 되었을시의 상황을 고려해볼 것
     @Override
     public BaseResponse sendVerificationCodeForPhoneNumber(String phoneNumber) throws Exception {
+        // 휴대폰 번호 중복 2차 검사
         if (this.phoneNumberExist(phoneNumber)) {
             User user = userMapper.getUserByPhoneNumber(phoneNumber);
 
@@ -77,6 +77,7 @@ public class UserRegisterServiceImpl implements UserRegisterService {
             throw new UserRegisterFailException(phoneNumberAlreadyExist);
         }
 
+        // 인증번호 생성 후 메시지 발송
         String verificationCode = RandomStringUtils.randomNumeric(6);
         String messageText = String.format("[Mokasong](회원가입 휴대전화 인증) 인증번호는 [%s]입니다.", verificationCode);
 
@@ -84,14 +85,14 @@ public class UserRegisterServiceImpl implements UserRegisterService {
         // coolsms.sendMessageToOne(phoneNumber, messageText);
         System.out.println(verificationCode);
 
+        // redis server에 인증번호 3분간 임시 저장
         redisClient.setString(RedisCategory.REGISTER_CELLPHONE, phoneNumber, verificationCode, 3);
 
         return new NormalResponse("인증번호를 전송하였습니다. 3분안에 인증해주세요.", new HashMap<>() {{
-            put("is_sent", true);
+            put("success", true);
         }});
     }
 
-    // TODO: 만료되었을 시의 상황을 고려해볼 것
     @Override
     public BaseResponse checkVerificationCodeForPhoneNumber(VerificationCodeCheckDto verificationCodeCheckDto) throws Exception {
         String phoneNumber = verificationCodeCheckDto.getPhone_number();
@@ -99,21 +100,24 @@ public class UserRegisterServiceImpl implements UserRegisterService {
 
         String verificationCodeInRedisServer = redisClient.getString(RedisCategory.REGISTER_CELLPHONE, phoneNumber);
 
+        // redis server에 인증번호가 없으면 인증시간 만료로 간주
         if (verificationCodeInRedisServer == null) {
             throw new VerificationCodeException(VERIFICATION_TIME_EXPIRE);
         }
+        // redis server에 있는 인증번호가 다른 경우
         if (!verificationCodeInRedisServer.equals(verificationCode)) {
             throw new VerificationCodeException(VERIFICATION_CODE_NOT_EQUAL);
         }
 
+        // 회원가입 대기상태 전환 API 요청 시 휴대폰 번호 조작 방지용 토큰 생성
         String randomString = RandomStringUtils.randomAlphanumeric(100);
-        redisClient.setString(RedisCategory.CHANGE_TO_STAND_BY_REGULAR, phoneNumber, randomString, 5);
+        redisClient.setString(RedisCategory.CHANGE_TO_STAND_BY_REGULAR, phoneNumber, randomString, 3);
 
         redisClient.deleteKey(RedisCategory.REGISTER_CELLPHONE, phoneNumber);
 
         return new NormalResponse("인증이 완료되었습니다.", new HashMap<>() {{
-            put("verification_success", true);
-            put("token", randomString);
+            put("success", true);
+            put("verification_token", randomString);
         }});
     }
 
@@ -124,33 +128,46 @@ public class UserRegisterServiceImpl implements UserRegisterService {
         String email = userRegisterDto.getEmail();
 
         String verificationTokenInRedisServer = redisClient.getString(RedisCategory.CHANGE_TO_STAND_BY_REGULAR, phoneNumber);
+
+        // redis server에 휴대폰 번호 저작 방지용 토큰이 없으면 인증시간 만료로 간주
         if (verificationTokenInRedisServer == null) {
-            throw new UserRegisterFailException(REQUEST_TIME_EXPIRE_OR_DATA_COUNTERFEIT_DETECTED);
+            throw new UserRegisterFailException(REQUEST_TIME_EXPIRE_FOR_USER_REGISTER);
         }
+        // redis server에 있는 토큰이 다른 경우
         if (!verificationTokenInRedisServer.equals(userRegisterDto.getVerification_token())) {
             throw new UserRegisterFailException(VERIFICATION_TOKEN_NOT_EQUAL);
         }
 
         User selectedUserByPhoneNumber = userMapper.getUserByPhoneNumber(phoneNumber);
+        // 휴대폰 번호로 유저 조회가 되었을때
         if (selectedUserByPhoneNumber != null) {
+            // 탈퇴(soft delete)한 유저가 아니라면 유저가 이미 존재한다고 알려줌
             if (!selectedUserByPhoneNumber.getIs_deleted()) {
                 throw new UserRegisterFailException(PHONE_NUMBER_ALREADY_EXIST);
-            } else {
+            }
+            // 탈퇴(soft delete)한 유저라면 해당 레코드 삭제
+            else {
                 userMapper.deleteUserById(selectedUserByPhoneNumber.getUser_id());
             }
         }
 
         User selectedUserByEmail = userMapper.getUserByEmail(email);
+        // 이메일로 유저 조회가 되었을 때
         if (selectedUserByEmail != null) {
+            // 탈퇴(soft delete)한 유저가 아니라면 유저가 이미 존재한다고 알려줌
             if (!selectedUserByEmail.getIs_deleted()) {
                 throw new UserRegisterFailException(EMAIL_ALREADY_EXIST);
-            } else {
+            }
+            // 탈퇴(soft delete)한 유저라면 해당 레코드 삭제
+            else {
                 userMapper.deleteUserById(selectedUserByEmail.getUser_id());
             }
         }
 
         String registerToken;
         User selectedUserByRegisterToken;
+
+        // 회원가입 대기 상태 -> 정식 회원으로 전환할때 사용할 토큰을 회원 db에 함께 저장. 가입 토큰은 악의적으로 요청될 일이 없기 때문에 만료 시간이 없다.
         do {
             registerToken = RandomStringUtils.randomAlphanumeric(200);
             selectedUserByRegisterToken = userMapper.getUserByRegisterToken(registerToken);
@@ -182,6 +199,7 @@ public class UserRegisterServiceImpl implements UserRegisterService {
             throw new UserRegisterFailException(INVALID_ACCESS);
         }
 
+        // 가입 토큰이 유효하다면 정식 회원 전환
         user.changeAuthorityToRegular();
         userMapper.updateUser(user);
     }

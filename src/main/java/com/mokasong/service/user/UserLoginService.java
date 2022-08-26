@@ -1,6 +1,5 @@
 package com.mokasong.service.user;
 
-import com.mokasong.domain.user.User;
 import com.mokasong.dto.user.LoginDto;
 import com.mokasong.response.BaseResponse;
 
