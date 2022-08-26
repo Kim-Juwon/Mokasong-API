@@ -1,7 +1,7 @@
 package com.mokasong.controller.user;
 
 import com.mokasong.annotation.Auth;
-import com.mokasong.annotation.NonAuth;
+import com.mokasong.annotation.NoAuth;
 import com.mokasong.annotation.ValidationGroups.*;
 import com.mokasong.annotation.XssPrevent;
 import com.mokasong.dto.user.LoginDto;
@@ -22,7 +22,7 @@ import static com.mokasong.state.Authority.ADMIN;
 import static com.mokasong.state.Authority.REGULAR;
 
 @RestController
-@Tag(name = "로그인/회원가입", description = "로그인/회원가입 API")
+@Tag(name = "로그인/로그아웃", description = "로그인/로그아웃 API")
 public class UserLoginController {
     private final UserLoginService userLoginService;
 
@@ -31,9 +31,9 @@ public class UserLoginController {
         this.userLoginService = userLoginService;
     }
 
-    @NonAuth
+    @NoAuth
     @XssPrevent
-    @Tag(name = "로그인/회원가입")
+    @Tag(name = "로그인/로그아웃")
     @PostMapping("/user/login")
     @ApiOperation(value = "로그인", notes = "로그인합니다.")
     public ResponseEntity<BaseResponse> login(@RequestBody @Validated(Login.class) LoginDto loginDto) throws Exception {
@@ -42,7 +42,7 @@ public class UserLoginController {
 
     @Auth({REGULAR, ADMIN})
     @XssPrevent
-    @Tag(name = "로그인/회원가입")
+    @Tag(name = "로그인/로그아웃")
     @PostMapping("/user/logout")
     @ApiOperation(value = "로그아웃", notes = "로그아웃", authorizations = @Authorization(value = "Authorization"))
     public ResponseEntity<BaseResponse> logout() throws Exception {

@@ -7,7 +7,6 @@ import com.mokasong.exception.custom.UserLogoutException;
 import com.mokasong.repository.UserMapper;
 import com.mokasong.response.BaseResponse;
 import com.mokasong.response.NormalResponse;
-import com.mokasong.state.Authority;
 import com.mokasong.util.JwtHandler;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;

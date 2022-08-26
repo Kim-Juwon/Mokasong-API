@@ -65,6 +65,7 @@ public class UserRegisterServiceImpl implements UserRegisterService {
         }});
     }
 
+    // TODO: 만료 되었을시의 상황을 고려해볼 것
     @Override
     public BaseResponse sendVerificationCodeForPhoneNumber(String phoneNumber) throws Exception {
         if (this.phoneNumberExist(phoneNumber)) {
@@ -90,6 +91,7 @@ public class UserRegisterServiceImpl implements UserRegisterService {
         }});
     }
 
+    // TODO: 만료되었을 시의 상황을 고려해볼 것
     @Override
     public BaseResponse checkVerificationCodeForPhoneNumber(VerificationCodeCheckDto verificationCodeCheckDto) throws Exception {
         String phoneNumber = verificationCodeCheckDto.getPhone_number();
@@ -119,14 +121,7 @@ public class UserRegisterServiceImpl implements UserRegisterService {
     @Transactional
     public BaseResponse changeToStandingByRegister(UserRegisterDto userRegisterDto) throws Exception {
         String phoneNumber = userRegisterDto.getPhone_number();
-        if (this.phoneNumberExist(phoneNumber)) {
-            throw new UserRegisterFailException(PHONE_NUMBER_ALREADY_EXIST);
-        }
-
         String email = userRegisterDto.getEmail();
-        if (this.emailExist(email)) {
-            throw new UserRegisterFailException(EMAIL_ALREADY_EXIST);
-        }
 
         String verificationTokenInRedisServer = redisClient.getString(RedisCategory.CHANGE_TO_STAND_BY_REGULAR, phoneNumber);
         if (verificationTokenInRedisServer == null) {
@@ -134,6 +129,24 @@ public class UserRegisterServiceImpl implements UserRegisterService {
         }
         if (!verificationTokenInRedisServer.equals(userRegisterDto.getVerification_token())) {
             throw new UserRegisterFailException(VERIFICATION_TOKEN_NOT_EQUAL);
+        }
+
+        User selectedUserByPhoneNumber = userMapper.getUserByPhoneNumber(phoneNumber);
+        if (selectedUserByPhoneNumber != null) {
+            if (!selectedUserByPhoneNumber.getIs_deleted()) {
+                throw new UserRegisterFailException(PHONE_NUMBER_ALREADY_EXIST);
+            } else {
+                userMapper.deleteUserById(selectedUserByPhoneNumber.getUser_id());
+            }
+        }
+
+        User selectedUserByEmail = userMapper.getUserByEmail(email);
+        if (selectedUserByEmail != null) {
+            if (!selectedUserByEmail.getIs_deleted()) {
+                throw new UserRegisterFailException(EMAIL_ALREADY_EXIST);
+            } else {
+                userMapper.deleteUserById(selectedUserByEmail.getUser_id());
+            }
         }
 
         String registerToken;

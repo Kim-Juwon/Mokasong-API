@@ -1,6 +1,6 @@
 package com.mokasong.controller.user;
 
-import com.mokasong.annotation.NonAuth;
+import com.mokasong.annotation.NoAuth;
 import com.mokasong.annotation.ValidationGroups.*;
 import com.mokasong.annotation.XssPrevent;
 import com.mokasong.dto.user.UserRegisterDto;
@@ -30,7 +30,7 @@ public class UserRegisterController {
         this.userRegisterService = userRegisterService;
     }
 
-    @NonAuth
+    @NoAuth
     @Tag(name = "회원가입")
     @GetMapping("/existence/email/{email}")
     @ApiOperation(value = "이메일 중복 확인", notes = "이메일이 회원 정보에 이미 존재하는지 확인합니다.")
@@ -42,7 +42,7 @@ public class UserRegisterController {
         return new ResponseEntity<>(userRegisterService.getExistenceOfEmail(email), HttpStatus.OK);
     }
 
-    @NonAuth
+    @NoAuth
     @Tag(name = "회원가입")
     @GetMapping("/existence/phone-number/{phone-number}")
     @ApiOperation(value = "휴대전화번호 중복 확인", notes = "휴대전화번호가 회원 정보에 이미 존재하는지 확인합니다.")
@@ -54,7 +54,7 @@ public class UserRegisterController {
         return new ResponseEntity<>(userRegisterService.getExistenceOfPhoneNumber(phoneNumber), HttpStatus.OK);
     }
 
-    @NonAuth
+    @NoAuth
     @XssPrevent
     @Tag(name = "회원가입")
     @PostMapping("/user/phone-number/verification-code/send")
@@ -67,7 +67,7 @@ public class UserRegisterController {
         return new ResponseEntity<>(userRegisterService.sendVerificationCodeForPhoneNumber(phoneNumber), HttpStatus.OK);
     }
 
-    @NonAuth
+    @NoAuth
     @XssPrevent
     @Tag(name = "회원가입")
     @PostMapping("/user/phone-number/verification-code/check")
@@ -79,7 +79,7 @@ public class UserRegisterController {
         return new ResponseEntity<>(userRegisterService.checkVerificationCodeForPhoneNumber(verificationCodeCheckDto), HttpStatus.OK);
     }
 
-    @NonAuth
+    @NoAuth
     @XssPrevent
     @Tag(name = "회원가입")
     @PostMapping("/user/register/stand-by")
