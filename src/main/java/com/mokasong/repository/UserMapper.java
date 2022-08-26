@@ -16,5 +16,5 @@ public interface UserMapper {
     User getUserBySecretKey(String secretKey);
     Long getUserIdByEmail(String email);
     void updateUser(User user);
-    void deleteUser(Long userId);
+    void deleteUserById(Long userId);
 }

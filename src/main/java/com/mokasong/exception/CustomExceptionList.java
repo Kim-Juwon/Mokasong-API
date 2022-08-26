@@ -18,7 +18,7 @@ public enum CustomExceptionList {
 
     VERIFICATION_TIME_EXPIRE(102, "인증 시간이 만료되었습니다.", HttpStatus.FORBIDDEN),
 
-    REQUEST_TIME_EXPIRE_OR_DATA_COUNTERFEIT_DETECTED(103, "요청 가능 시간이 만료되었거나 데이터 조작이 감지되었습니다.", HttpStatus.FORBIDDEN),
+    REQUEST_TIME_EXPIRE_FOR_USER_REGISTER(103, "회원가입 요청 가능 시간이 만료되었습니다. 회원가입을 다시 진행해주세요.", HttpStatus.FORBIDDEN),
 
     VERIFICATION_CODE_NOT_EQUAL(104, "인증 번호가 일치하지 않습니다.", HttpStatus.FORBIDDEN),
 

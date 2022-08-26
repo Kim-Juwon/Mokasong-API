@@ -1,13 +1,13 @@
 package com.mokasong.controller.user;
 
-import com.mokasong.annotation.NonAuth;
-import com.mokasong.annotation.ValidationGroups;
-import com.mokasong.annotation.XssPrevent;
-import com.mokasong.domain.user.User;
-import com.mokasong.domain.user.UserForVerification;
+import com.mokasong.annotation.NoAuth;
+import com.mokasong.annotation.ValidationGroups.*;
+import com.mokasong.dto.user.UserRegisterDto;
+import com.mokasong.dto.user.VerificationCodeCheckDto;
 import com.mokasong.response.BaseResponse;
 import com.mokasong.service.user.UserRegisterService;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +20,7 @@ import javax.validation.constraints.Pattern;
 
 @RestController
 @Validated
+@Tag(name = "회원가입", description = "회원가입 API")
 public class UserRegisterController {
     private UserRegisterService userRegisterService;
 
@@ -28,7 +29,8 @@ public class UserRegisterController {
         this.userRegisterService = userRegisterService;
     }
 
-    @NonAuth
+    @NoAuth
+    @Tag(name = "회원가입")
     @GetMapping("/existence/email/{email}")
     @ApiOperation(value = "이메일 중복 확인", notes = "이메일이 회원 정보에 이미 존재하는지 확인합니다.")
     public ResponseEntity<BaseResponse> getExistenceOfEmail(
@@ -39,7 +41,8 @@ public class UserRegisterController {
         return new ResponseEntity<>(userRegisterService.getExistenceOfEmail(email), HttpStatus.OK);
     }
 
-    @NonAuth
+    @NoAuth
+    @Tag(name = "회원가입")
     @GetMapping("/existence/phone-number/{phone-number}")
     @ApiOperation(value = "휴대전화번호 중복 확인", notes = "휴대전화번호가 회원 정보에 이미 존재하는지 확인합니다.")
     public ResponseEntity<BaseResponse> getExistenceOfPhoneNumber(
@@ -50,8 +53,8 @@ public class UserRegisterController {
         return new ResponseEntity<>(userRegisterService.getExistenceOfPhoneNumber(phoneNumber), HttpStatus.OK);
     }
 
-    @NonAuth
-    @XssPrevent
+    @NoAuth
+    @Tag(name = "회원가입")
     @PostMapping("/user/phone-number/verification-code/send")
     @ApiOperation(value = "휴대전화 인증번호 발송", notes = "휴대전화 인증번호를 발송합니다.")
     public ResponseEntity<BaseResponse> sendVerificationCodeForPhoneNumber(
@@ -62,27 +65,25 @@ public class UserRegisterController {
         return new ResponseEntity<>(userRegisterService.sendVerificationCodeForPhoneNumber(phoneNumber), HttpStatus.OK);
     }
 
-    @NonAuth
-    @XssPrevent
+    @NoAuth
+    @Tag(name = "회원가입")
     @PostMapping("/user/phone-number/verification-code/check")
     @ApiOperation(value = "휴대전화 인증번호 확인", notes = "휴대전화 인증번호를 확인합니다.")
     public ResponseEntity<BaseResponse> checkVerificationCodeForPhoneNumber(
             @RequestBody
-            @Validated(ValidationGroups.CheckVerificationCodeForPhoneNumber.class)
-            UserForVerification userInRequest) throws Exception {
-        return new ResponseEntity<>(userRegisterService.checkVerificationCodeForPhoneNumber(userInRequest), HttpStatus.OK);
+            @Validated(CheckVerificationCodeForPhoneNumber.class)
+            VerificationCodeCheckDto verificationCodeCheckDto) throws Exception {
+        return new ResponseEntity<>(userRegisterService.checkVerificationCodeForPhoneNumber(verificationCodeCheckDto), HttpStatus.OK);
     }
 
-    @NonAuth
-    @XssPrevent
+    @NoAuth
+    @Tag(name = "회원가입")
     @PostMapping("/user/register/stand-by")
     @ApiOperation(value = "회원가입 대기 상태로 전환", notes = "회원가입 대기 상태로 전환합니다.")
     public ResponseEntity<BaseResponse> changeToStandingByRegister(
-            @RequestParam("verification_token")
-            String verificationToken,
             @RequestBody
-            @Validated(ValidationGroups.ChangeToStandingByRegister.class)
-            User user) throws Exception {
-        return new ResponseEntity<>(userRegisterService.changeToStandingByRegister(user, verificationToken), HttpStatus.OK);
+            @Validated(ChangeToStandingByRegister.class)
+            UserRegisterDto userRegisterDto) throws Exception {
+        return new ResponseEntity<>(userRegisterService.changeToStandingByRegister(userRegisterDto), HttpStatus.OK);
     }
 }

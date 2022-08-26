@@ -84,7 +84,7 @@
         WHERE user_id = #{user_id}
     </update>
 
-    <delete id="deleteUser">
+    <delete id="deleteUserById">
         DELETE
         FROM users
         WHERE user_id = #{userId}
