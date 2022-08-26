@@ -5,7 +5,7 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.mokasong.exception.CustomException;
 import com.mokasong.response.ExceptionResponse;
-import com.mokasong.response.detail.RequestDataBindExceptionResponse;
+import com.mokasong.response.detail.RequestDataInvalidExceptionResponse;
 import net.nurigo.sdk.message.exception.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindException;
@@ -56,16 +56,18 @@ import static com.mokasong.exception.CustomExceptionList.*;
 public class GlobalExceptionHandler {
     @ExceptionHandler(Throwable.class)
     public ResponseEntity<ExceptionResponse> exceptionHandle(Throwable e, HandlerMethod handlerMethod) {
+        /* TODO: 카카오톡 알림 서비스 구축할때 CriticalException에 대해 개발자에게 카카오톡을 보내주는 코드 작성하기,
+                 CriticalException을 어디에 적용할 것인지 생각해보기 */
+
         // Custom Exception
         if (e instanceof CustomException) {
-            return new ResponseEntity<>(new ExceptionResponse(
-                    e.getMessage(),
+            return new ResponseEntity<>(new ExceptionResponse(e.getMessage(),
                     ((CustomException) e).getErrorCode()),
                     ((CustomException) e).getHttpStatusCode());
         }
 
         // 문자발송 서비스 Exception
-        else if (isKindOfNurigoException(e)) {
+        else if (this.isKindOfMessageSendException(e)) {
             return new ResponseEntity<>(new ExceptionResponse(
                     MESSAGE_SEND_HAS_PROBLEM.getMessage(),
                     MESSAGE_SEND_HAS_PROBLEM.getErrorCode()),
@@ -73,7 +75,7 @@ public class GlobalExceptionHandler {
         }
 
         // JWT 관련 Exception
-        else if (isKindOfJWTException(e)) {
+        else if (this.isKindOfJWTException(e)) {
             // 토큰 발급 시 throw된 Exception
             if (e instanceof JWTCreationException) {
                 return new ResponseEntity<>(new ExceptionResponse(
@@ -88,19 +90,19 @@ public class GlobalExceptionHandler {
                             TOKEN_EXPIRED.getErrorCode()),
                             TOKEN_EXPIRED.getHttpStatusCode());
                 }
-                // 그 외 Exception은 토큰 조작 감지로 처리
+                // 그 외 Exception은 토큰 조작 감지로 간주
                 // TODO: 더 견고하게 처리할 수 없을지 생각해보기
                 else {
                     return new ResponseEntity<>(new ExceptionResponse(
-                            TOKEN_DETECTED_DIRTY.getMessage(),
-                            TOKEN_DETECTED_DIRTY.getErrorCode()),
-                            TOKEN_DETECTED_DIRTY.getHttpStatusCode());
+                            TOKEN_DIRTY_DETECTED.getMessage(),
+                            TOKEN_DIRTY_DETECTED.getErrorCode()),
+                            TOKEN_DIRTY_DETECTED.getHttpStatusCode());
                 }
             }
         }
 
         // 요청 데이터 유효성 검증 Exception
-        else if ((e instanceof BindException) || (e instanceof ConstraintViolationException)) {
+        else if (this.isKindOfRequestDataInvalidException(e)) {
             List<String> dataValidationErrors = new ArrayList<>();
 
             // request body일 경우
@@ -122,7 +124,7 @@ public class GlobalExceptionHandler {
                 }
             }
 
-            return new ResponseEntity<>(new RequestDataBindExceptionResponse(
+            return new ResponseEntity<>(new RequestDataInvalidExceptionResponse(
                     INVALID_REQUEST_DATA.getMessage(),
                     INVALID_REQUEST_DATA.getErrorCode(),
                     dataValidationErrors),
@@ -132,7 +134,7 @@ public class GlobalExceptionHandler {
         // 그 외 예측할 수 없는 Exception일 경우
         else {
             return new ResponseEntity<>(new ExceptionResponse(
-                    e.getMessage() + e.getClass(),
+                    UNPREDICTABLE.getMessage(),
                     UNPREDICTABLE.getErrorCode()),
                     UNPREDICTABLE.getHttpStatusCode());
         }
@@ -142,7 +144,7 @@ public class GlobalExceptionHandler {
      *  net.nurigo.sdk.message.exception.NurigoException은 sub class가 존재하지 않습니다.
      *  따라서 구체적인 Exception들에 대해 전부 검사합니다.
      */
-    private boolean isKindOfNurigoException(Throwable e) {
+    private boolean isKindOfMessageSendException(Throwable e) {
         return (e instanceof NurigoApiKeyException)
             || (e instanceof NurigoBadRequestException)
             || (e instanceof NurigoEmptyResponseException)
@@ -156,5 +158,9 @@ public class GlobalExceptionHandler {
     private boolean isKindOfJWTException(Throwable e) {
         return (e instanceof JWTCreationException)
             || (e instanceof JWTVerificationException);
+    }
+
+    private boolean isKindOfRequestDataInvalidException(Throwable e) {
+        return ((e instanceof BindException) || (e instanceof ConstraintViolationException));
     }
 }
