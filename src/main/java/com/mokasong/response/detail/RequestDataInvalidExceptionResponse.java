@@ -7,11 +7,11 @@ import lombok.Getter;
 import java.util.List;
 
 @Getter
-public class RequestDataBindExceptionResponse extends ExceptionResponse {
+public class RequestDataInvalidExceptionResponse extends ExceptionResponse {
     @JsonProperty("validation_error_messages")
     private List<String> validationErrorMessages;
 
-    public RequestDataBindExceptionResponse(String message, Integer errorCode, List<String> validationErrorMessages) {
+    public RequestDataInvalidExceptionResponse(String message, Integer errorCode, List<String> validationErrorMessages) {
         super(message, errorCode);
         this.validationErrorMessages = validationErrorMessages;
     }
