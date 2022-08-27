@@ -5,56 +5,56 @@
 <!-- 위 코드가 mapper 설정을 하는 코드 -->
 
 <!-- Mapper를 사용하는 Repository의 전체 경로를 적어줘야함. -->
-<mapper namespace="com.mokasong.repository.UserMapper">
-    <insert id="createUser" parameterType="com.mokasong.domain.user.User" useGeneratedKeys="true" keyProperty="user_id">
+<mapper namespace="com.mokasong.user.repository.UserMapper">
+    <insert id="createUser" parameterType="com.mokasong.user.domain.User" useGeneratedKeys="true" keyProperty="user_id">
         INSERT INTO users
         (email, password, phone_number, address, authority, name, last_login_time, last_logout_time, register_token, is_deleted, created_at, updated_at)
         VALUES(#{email}, #{password}, #{phone_number}, #{address}, #{authority}, #{name}, #{last_login_time}, #{last_logout_time}, #{register_token}, #{is_deleted}, #{created_at}, #{updated_at})
     </insert>
 
-    <select id="getUserById" resultType="com.mokasong.domain.user.User">
+    <select id="getUserById" resultType="com.mokasong.user.domain.User">
         SELECT *
         FROM users
         WHERE user_id = #{userId}
     </select>
 
-    <select id="getUserByEmail" resultType="com.mokasong.domain.user.User">
+    <select id="getUserByEmail" resultType="com.mokasong.user.domain.User">
         SELECT *
         FROM users
         WHERE email = #{email}
     </select>
 
-    <select id="getUserByPhoneNumber" resultType="com.mokasong.domain.user.User">
+    <select id="getUserByPhoneNumber" resultType="com.mokasong.user.domain.User">
         SELECT *
         FROM users
         WHERE phone_number = #{phoneNumber}
     </select>
 
-    <select id="getUserByName" resultType="com.mokasong.domain.user.User">
+    <select id="getUserByName" resultType="com.mokasong.user.domain.User">
         SELECT *
         FROM users
         WHERE name = #{name}
     </select>
 
-    <select id="getUserByNameAndPhoneNumber" resultType="com.mokasong.domain.user.User">
+    <select id="getUserByNameAndPhoneNumber" resultType="com.mokasong.user.domain.User">
         SELECT *
         FROM users
         WHERE name = #{name} AND phone_number = #{phoneNumber}
     </select>
 
-    <select id="getUserByNameAndEmail" resultType="com.mokasong.domain.user.User">
+    <select id="getUserByNameAndEmail" resultType="com.mokasong.user.domain.User">
         SELECT *
         FROM users
         WHERE name = #{name} AND email = #{email}
     </select>
 
-    <select id="getUserByRegisterToken" resultType="com.mokasong.domain.user.User">
+    <select id="getUserByRegisterToken" resultType="com.mokasong.user.domain.User">
         SELECT *
         FROM users
         WHERE register_token = #{registerToken}
     </select>
 
-    <select id="getUserBySecretKey" resultType="com.mokasong.domain.user.User">
+    <select id="getUserBySecretKey" resultType="com.mokasong.user.domain.User">
         SELECT *
         FROM users
         WHERE secret_key = #{secretKey}
@@ -66,7 +66,7 @@
         WHERE email = #{email}
     </select>
 
-    <update id="updateUser" parameterType="com.mokasong.domain.user.User">
+    <update id="updateUser" parameterType="com.mokasong.user.domain.User">
         UPDATE users
         SET
             email = #{email},
