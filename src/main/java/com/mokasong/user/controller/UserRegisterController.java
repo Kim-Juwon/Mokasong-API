@@ -1,7 +1,6 @@
 package com.mokasong.user.controller;
 
-import com.mokasong.user.validation.UserDataValidationGroups.ChangeToStandingByRegister;
-import com.mokasong.user.validation.UserDataValidationGroups.CheckVerificationCodeForPhoneNumber;
+import com.mokasong.user.validation.UserDataValidationGroups.*;
 import com.mokasong.common.response.BaseResponse;
 import com.mokasong.user.dto.UserRegisterDto;
 import com.mokasong.user.dto.VerificationCodeCheckDto;
@@ -71,7 +70,7 @@ public class UserRegisterController {
     @ApiOperation(value = "휴대전화 인증번호 확인", notes = "휴대전화 인증번호를 확인합니다.")
     public ResponseEntity<BaseResponse> checkVerificationCodeForPhoneNumber(
             @RequestBody
-            @Validated(CheckVerificationCodeForPhoneNumber.class)
+            @Validated(VerifyPhoneNumber.class)
             VerificationCodeCheckDto verificationCodeCheckDto) throws Exception {
         return new ResponseEntity<>(userRegisterService.checkVerificationCodeForPhoneNumber(verificationCodeCheckDto), HttpStatus.OK);
     }
@@ -81,7 +80,7 @@ public class UserRegisterController {
     @ApiOperation(value = "회원가입 대기 상태로 전환", notes = "회원가입 대기 상태로 전환합니다.")
     public ResponseEntity<BaseResponse> changeToStandingByRegister(
             @RequestBody
-            @Validated(ChangeToStandingByRegister.class)
+            @Validated(Register.class)
             UserRegisterDto userRegisterDto) throws Exception {
         return new ResponseEntity<>(userRegisterService.changeToStandingByRegister(userRegisterDto), HttpStatus.OK);
     }

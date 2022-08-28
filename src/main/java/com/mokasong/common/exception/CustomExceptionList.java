@@ -26,7 +26,7 @@ public enum CustomExceptionList {
 
     VERIFICATION_TOKEN_NOT_EQUAL(105, "인증 토큰이 일치하지 않습니다.", HttpStatus.FORBIDDEN),
 
-    USER_NOT_EXIST(106, "이메일과 비밀번호를 다시 확인해주세요.", HttpStatus.FORBIDDEN),
+    USER_NOT_EXIST(106, "회원 정보가 없습니다.", HttpStatus.FORBIDDEN),
 
     TOKEN_EXPIRED(107, "토큰의 유효시간이 만료되었습니다.", HttpStatus.UNAUTHORIZED),
 

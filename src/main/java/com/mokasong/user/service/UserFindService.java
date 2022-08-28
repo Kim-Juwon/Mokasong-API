@@ -1,120 +1,94 @@
 package com.mokasong.user.service;
 
-/*
+import com.mokasong.common.response.BaseResponse;
+import com.mokasong.common.response.NormalResponse;
+import com.mokasong.common.state.RedisCategory;
+import com.mokasong.common.util.AwsSes;
+import com.mokasong.common.util.MessageSender;
+import com.mokasong.common.util.RedisClient;
+import com.mokasong.user.domain.User;
+import com.mokasong.user.dto.UserFindDto;
+import com.mokasong.user.exception.UserFindFailException;
+import com.mokasong.user.repository.UserMapper;
+import com.mokasong.user.validation.UserDataValidationGroups.*;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
+
+import javax.validation.Valid;
+import java.util.HashMap;
+
+import static com.mokasong.common.exception.CustomExceptionList.USER_NOT_EXIST;
+
 @Service
-public class UserFindServiceImpl implements UserFindService {
+@Validated
+public class UserFindService {
     private final UserMapper userMapper;
     private final AwsSes awsSes;
-    private final Coolsms coolsms;
-    private final ValueOperations<String, String> redisClient;
+    private final MessageSender messageSender;
+    private final RedisClient redisClient;
 
     @Autowired
-    public UserFindServiceImpl(
-        UserMapper userMapper, AwsSes awsSes,
-        Coolsms coolsms, RedisTemplate<String, String> redisTemplate) {
+    public UserFindService(
+            UserMapper userMapper, AwsSes awsSes,
+            MessageSender messageSender, RedisClient redisClient) {
         this.userMapper = userMapper;
         this.awsSes = awsSes;
-        this.coolsms = coolsms;
-        this.redisClient = redisTemplate.opsForValue();
+        this.messageSender = messageSender;
+        this.redisClient = redisClient;
     }
 
-    @Override
-    @Transactional
-    public BaseResponse sendVerificationCodeForFindEmail(UserForVerification userForVerification) throws Exception {
-        User selectedUser = userMapper.getUserByNameAndPhoneNumber(userForVerification.getName(), userForVerification.getPhone_number());
+    @Transactional(readOnly = true)
+    @Validated(FindEmail.class)
+    public BaseResponse sendCodeForFindEmail(@Valid UserFindDto userFindDto) throws Exception {
+        User selectedUser = userMapper.getUserByNameAndPhoneNumber(userFindDto.getName(), userFindDto.getPhone_number());
 
-        if ((selectedUser == null) || (selectedUser.getAuthority() == Authority.STAND_BY_REGISTER)) {
-            throw new UserFindFailException(IMPOSSIBLE_FIND_EMAIL_BY_PHONE_NUMBER);
+        if ((selectedUser == null) || (selectedUser.getIs_deleted())) {
+            throw new UserFindFailException(USER_NOT_EXIST);
         }
 
         String verificationCode = RandomStringUtils.randomNumeric(6);
-        String messageText = String.format("[Mokasong](이메일 찾기 인증) 인증번호는 [%s]입니다.", verificationCode);
+
+        redisClient.setString(RedisCategory.FIND_EMAIL, userFindDto.getPhone_number(), verificationCode, 60);
 
         // TODO: 다시 살리기
-        // coolsms.sendMessageToOne(phoneNumber, messageText);
+        // messageSender.sendMessageToOne(MessageSendPurpose.FIND_EMAIL, emailFindDto.getPhone_number(), verificationCode);
         System.out.println(verificationCode);
 
-        String key = String.format("find-email/verification/code/%s", userForVerification.getPhone_number());
-        redisClient.set(key, verificationCode);
-
-        return new NormalResponse("인증번호가 전송되었습니다.", new HashMap<>() {{
-            put("is_sent", true);
+        return new NormalResponse("인증번호를 전송하였습니다.", new HashMap<>() {{
+            put("success", true);
         }});
     }
 
-    // TODO: 인증번호 만료시간 어떻게 설정할것인지 정하기
-    @Override
-    @Transactional
-    public BaseResponse checkVerificationCodeForFindEmail(UserForVerification userForVerification) throws Exception {
-        User selectedUser = userMapper.getUserByNameAndPhoneNumber(userForVerification.getName(), userForVerification.getPhone_number());
+    @Transactional(readOnly = true)
+    @Validated(FindPassword.class)
+    public BaseResponse sendCodeForFindPassword(@Valid UserFindDto userFindDto) throws Exception {
+        User selectedUser = userMapper.getUserByNameAndEmail(userFindDto.getName(), userFindDto.getEmail());
 
-        // 이름과 전화번호가 매핑되는 회원 정보가 없는 경우는 인증 프로세스 실행 불가능
-        if (selectedUser == null) {
-            throw new UserFindFailException(IMPOSSIBLE_VERIFY_CODE);
-        }
-
-        String key = String.format("find-email/verification/code/%s", userForVerification.getPhone_number());
-        String verificationCodeInRedis = redisClient.get(key);
-
-        // 인증번호가 redis-server에 없을때
-        if (verificationCodeInRedis == null) {
-            throw new VerificationCodeException(REQUIRED_SEND_VERIFICATION_CODE);
-        }
-
-        String verificationCode = userForVerification.getVerification_code();
-        // 인증번호가 불일치할때
-        if (!verificationCodeInRedis.equals(verificationCode)) {
-            throw new VerificationCodeException(NOT_EQUAL_VERIFICATION_CODE);
-        }
-
-        redisClient.getAndDelete(key);
-
-        return new NormalResponse("인증이 완료되었습니다.", new HashMap<>(){{
-            put("verification", true);
-            put("user", new HashMap<String, Object>() {{
-                put("email", selectedUser.getEmail());
-                put("name", selectedUser.getName());
-                put("registration_date", selectedUser.getCreated_at()); // 가입일
-            }});
-        }});
-    }
-
-    // TODO: 인증번호 만료시간 어떻게 설정할것인지 정하기
-    /*@Override
-    @Transactional
-    public BaseResponse sendVerificationCodeForFindPassword(UserForFind userForFind) throws Exception {
-        User selectedUser = userMapper.getUserByNameAndPhoneNumber(userForFind.getName(), userForFind.getEmail());
-
-        // 이름과 전화번호가 매칭되는 회원 정보가 없는 경우는 인증 프로세스 실행 불가능
-        if (selectedUser == null) {
-            throw new UserFindFailException(IMPOSSIBLE_VERIFY_CODE);
+        if ((selectedUser == null) || (selectedUser.getIs_deleted())) {
+            throw new UserFindFailException(USER_NOT_EXIST);
         }
 
         String verificationCode = RandomStringUtils.randomNumeric(6);
-        String key;
 
-        String way = userForFind.getWay();
-        switch (way) {
-            case "EMAIL":
-                awsSes.sendEmail(selectedUser.getEmail(), "[Mokasong] 비밀번호 찾기 인증번호입니다.", verificationCode);
-                key =
-                break;
-            case "CELLPHONE":
-                coolsms.sendMessageToOne(selectedUser.getPhone_number(),
-                        String.format("[Mokasong](비밀번호 찾기 인증) 인증번호는 [%s]입니다.", verificationCode));
-                break;
-            default:
-                throw new UserFindFailException(INVALID_REQUEST_DATA);
-                break;
+        redisClient.setString(RedisCategory.FIND_PASSWORD, selectedUser.getPhone_number(), verificationCode, 60);
+
+        // 인증 방법이 이메일이라면 AWS SES 사용
+        if (userFindDto.getWay().equals("email")) {
+            // TODO: 실제 배포시에는 html로 바꿀것
+            awsSes.sendEmail(userFindDto.getEmail(), "[Mokasong] 비밀번호 찾기를 위한 인증번호입니다.", verificationCode);
+        }
+        // 인증방법이 휴대폰이라면 Coolsms 사용
+        if (userFindDto.getWay().equals("cellphone")) {
+            // TODO: 다시 살리기
+            // messageSender.sendMessageToOne(MessageSendPurpose.FIND_PASSWORD, selectedUser.getPhone_number(), verificationCode);
+            System.out.println(verificationCode);
         }
 
-        String key = String.format("find-password/verification/code/%s", userForFind.get);
-    }
-
-    @Override
-    public BaseResponse checkVerificationCodeForFindPassword(UserForFind userForFind) throws Exception {
-        return null;
+        return new NormalResponse("인증번호를 전송하였습니다.", new HashMap<>() {{
+            put("success", true);
+        }});
     }
 }
-
- */
