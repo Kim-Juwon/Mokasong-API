@@ -46,22 +46,26 @@ public class UserService {
 
     @Transactional
     public BaseResponse login(LoginDto dto) throws Exception {
-        User selectedUser = userMapper.getUserByEmail(dto.getEmail());
+        User user = userMapper.getUserByEmail(dto.getEmail());
 
-        // 유저가 조회된다면
-        if (selectedUser == null) {
+        // 유저가 조회되지 않는다면
+        if (user == null) {
             throw new LoginFailException(USER_NOT_EXIST);
         }
-        // 유저가 조회는 되지만, 탈퇴했거나 패스워드가 다르다면
-        if ((selectedUser.getIs_deleted()) || (!this.passwordValid(dto.getPassword(), selectedUser.getPassword()))) {
+        // 유저가 조회는 되지만, 탈퇴했거나 비밀번호가 다르다면
+        if ((user.getIs_deleted()) || (!this.passwordValid(dto.getPassword(), user.getPassword()))) {
             throw new LoginFailException(USER_NOT_EXIST);
+        }
+        // 회원가입 대기 상태라면 (정식 회원이 아니라면)
+        if (user.getAuthority() == Authority.STAND_BY_REGISTER) {
+            throw new LoginFailException(USER_NOT_REGULAR);
         }
 
         // 1시간의 유효시간을 가지는 access token 발급
-        String accessToken = jwtHandler.generateToken(selectedUser.getUser_id(), 1);
+        String accessToken = jwtHandler.generateToken(user.getUser_id(), 1);
 
-        selectedUser.changeLastLoginTimeToNow();
-        userMapper.updateUser(selectedUser);
+        user.changeLastLoginTimeToNow();
+        userMapper.updateUser(user);
 
         return new NormalResponse("로그인 되었습니다.", new HashMap<>() {{
             put("success", true);

@@ -30,15 +30,17 @@ public enum CustomExceptionList {
 
     USER_NOT_EXIST(107, "회원 정보가 없습니다.", HttpStatus.FORBIDDEN),
 
-    TOKEN_EXPIRED(108, "토큰의 유효시간이 만료되었습니다.", HttpStatus.UNAUTHORIZED),
+    USER_NOT_REGULAR(108, "회원 정보는 있으나 이메일 인증이 남은 상태입니다. 회원가입시 입력했던 이메일로 가서 인증링크를 클릭하고 다시 로그인해주세요.", HttpStatus.FORBIDDEN),
 
-    TOKEN_CREATION_HAS_PROBLEM(109, "토큰 발급 과정에서 에러가 발생하였습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+    TOKEN_EXPIRED(109, "토큰의 유효시간이 만료되었습니다.", HttpStatus.UNAUTHORIZED),
 
-    TOKEN_DIRTY_DETECTED(110, "토큰 변경이 감지되었습니다.", HttpStatus.UNAUTHORIZED),
+    TOKEN_CREATION_HAS_PROBLEM(110, "토큰 발급 과정에서 에러가 발생하였습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
 
-    TOKEN_NOT_EXIST_IN_REQUEST(111, "요청 헤더에 토큰이 없습니다.", HttpStatus.UNAUTHORIZED),
+    TOKEN_DIRTY_DETECTED(111, "토큰 변경이 감지되었습니다.", HttpStatus.UNAUTHORIZED),
 
-    TOKEN_NOT_CONTAIN_BEARER(112, "토큰은 Bearer +token 형태로 전송해야합니다.", HttpStatus.UNAUTHORIZED),
+    TOKEN_NOT_EXIST_IN_REQUEST(112, "요청 헤더에 토큰이 없습니다.", HttpStatus.UNAUTHORIZED),
+
+    TOKEN_NOT_CONTAIN_BEARER(113, "토큰은 Bearer +token 형태로 전송해야합니다.", HttpStatus.UNAUTHORIZED),
 
     // ---------------------------------------------------------------------------------------------------------------------------------------
 
