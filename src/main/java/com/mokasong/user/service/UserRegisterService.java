@@ -25,17 +25,17 @@ public class UserRegisterService {
     private final UserMapper userMapper;
     private final JwtHandler jwtHandler;
     private final AwsSes awsSes;
-    private final Coolsms coolsms;
+    private final MessageSender messageSender;
     private final RedisClient redisClient;
 
     @Autowired
     public UserRegisterService(
-        UserMapper userMapper, JwtHandler jwtHandler, AwsSes awsSes,
-        Coolsms coolsms, RedisClient redisClient) {
+            UserMapper userMapper, JwtHandler jwtHandler, AwsSes awsSes,
+            MessageSender messageSender, RedisClient redisClient) {
         this.userMapper = userMapper;
         this.jwtHandler = jwtHandler;
         this.awsSes = awsSes;
-        this.coolsms = coolsms;
+        this.messageSender = messageSender;
         this.redisClient = redisClient;
     }
 
@@ -74,16 +74,16 @@ public class UserRegisterService {
             throw new UserRegisterFailException(phoneNumberAlreadyExist);
         }
 
-        // 인증번호 생성 후 메시지 발송
+        // 인증번호 생성
         String verificationCode = RandomStringUtils.randomNumeric(6);
-        String messageText = String.format("[Mokasong](회원가입 휴대전화 인증) 인증번호는 [%s]입니다.", verificationCode);
-
-        // TODO: 다시 살리기
-        // coolsms.sendMessageToOne(phoneNumber, messageText);
-        System.out.println(verificationCode);
 
         // redis server에 인증번호 3분간 임시 저장
         redisClient.setString(RedisCategory.REGISTER_CELLPHONE, phoneNumber, verificationCode, 3);
+
+        // 인증번호 전송
+        // TODO: 다시 살리기
+        // messageSender.sendMessageToOne(MessageSendPurpose.VERIFY_CELLPHONE_NUMBER, phoneNumber, verificationCode);
+        System.out.println(verificationCode);
 
         return new NormalResponse("인증번호를 전송하였습니다. 3분안에 인증해주세요.", new HashMap<>() {{
             put("success", true);
@@ -93,7 +93,7 @@ public class UserRegisterService {
     // TODO: 메소드명 축약하기 (클래스명에서 이미 어떤 기능들이 있을지 암시하기 때문)
     public BaseResponse checkVerificationCodeForPhoneNumber(VerificationCodeCheckDto verificationCodeCheckDto) throws Exception {
         String phoneNumber = verificationCodeCheckDto.getPhone_number();
-        String verificationCode = verificationCodeCheckDto.getVerification_code();
+        String verificationCode = verificationCodeCheckDto.getCode();
 
         String verificationCodeInRedisServer = redisClient.getString(RedisCategory.REGISTER_CELLPHONE, phoneNumber);
 
@@ -101,7 +101,7 @@ public class UserRegisterService {
         if (verificationCodeInRedisServer == null) {
             throw new VerificationCodeException(VERIFICATION_TIME_EXPIRE);
         }
-        // redis server에 있는 인증번호가 다른 경우
+        // redis server에 있는 인증번호와 다른 경우
         if (!verificationCodeInRedisServer.equals(verificationCode)) {
             throw new VerificationCodeException(VERIFICATION_CODE_NOT_EQUAL);
         }
@@ -177,7 +177,7 @@ public class UserRegisterService {
         String url = "http://localhost:8080/user/register/" + registerToken;
 
         // TODO: 실제 배포시에는 html로 만들어 전송할것
-        awsSes.sendEmail(user.getEmail(), "[Mokasong] 이메일을 인증해주세요.", url);
+        awsSes.sendEmail(user.getEmail(), "[Mokasong] 회원가입을 위해 이메일을 인증해주세요.", url);
 
         redisClient.deleteKey(RedisCategory.CHANGE_TO_STAND_BY_REGULAR, phoneNumber);
 

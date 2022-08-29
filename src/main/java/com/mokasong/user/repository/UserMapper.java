@@ -9,6 +9,8 @@ public interface UserMapper {
     User getUserById(Long userId);
     User getUserByEmail(String email);
     User getUserByPhoneNumber(String phoneNumber);
+    User getUserByNameAndPhoneNumber(String name, String phoneNumber);
+    User getUserByNameAndEmail(String name, String email);
     User getUserByRegisterToken(String registerToken);
     void updateUser(User user);
     void deleteUserById(Long userId);

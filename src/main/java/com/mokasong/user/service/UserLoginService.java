@@ -18,7 +18,6 @@ import java.util.HashMap;
 import static com.mokasong.common.exception.CustomExceptionList.UNPREDICTABLE;
 import static com.mokasong.common.exception.CustomExceptionList.USER_NOT_EXIST;
 
-// TODO: Service/ServiceImpl 통합하기
 @Service
 public class UserLoginService {
     private UserMapper userMapper;
