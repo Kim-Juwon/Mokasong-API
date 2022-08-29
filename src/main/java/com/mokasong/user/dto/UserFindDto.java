@@ -26,12 +26,12 @@ public class UserFindDto {
     @Email(groups = FindPassword.class, message = "이메일 형식이어야 합니다.")
     private String email;
 
-    @Schema(description = "찾으려는 대상", required = true, nullable = false, example = "EMAIL")
+    @Schema(description = "찾으려는 대상(목적)", required = true, nullable = false, example = "FIND_EMAIL")
     @NotBlank(groups = Default.class, message = "찾으려는 대상은 필수입니다.")
-    @Pattern(groups = Default.class, regexp = "^(EMAIL|PASSWORD)$", message = "찾으려는 대상은 EMAIL 또는 PASSWORD 입니다.")
+    @Pattern(groups = Default.class, regexp = "^(FIND_EMAIL|FIND_PASSWORD)$", message = "찾으려는 대상은 FIND_EMAIL 또는 FIND_PASSWORD 입니다.")
     private String purpose;
 
-    @Schema(description = "인증 방법 (인증번호를 보내는 곳)", required = true, nullable = false, example = "CELLPHONE")
+    @Schema(description = "인증 방법(인증번호를 보내는 곳)", required = true, nullable = false, example = "CELLPHONE")
     @NotBlank(groups = {FindEmail.class, FindPassword.class}, message = "인증 방법은 필수입니다.")
     @Pattern(groups = {FindEmail.class, FindPassword.class}, regexp = "^(EMAIL|CELLPHONE)$", message = "인증 방법은 EMAIL 또는 CELLPHONE 입니다.")
     private String way;

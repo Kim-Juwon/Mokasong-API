@@ -48,4 +48,8 @@ public class User {
     public void changeLastLogoutTime() {
         this.last_logout_time = new Date();
     }
+
+    public void changeToNewPassword(String newPassword) {
+        this.password = BCrypt.hashpw(newPassword, BCrypt.gensalt());
+    }
 }

@@ -38,7 +38,7 @@ public class UserLoginController {
     @Login(REGULAR)
     @Tag(name = "로그인/로그아웃")
     @PostMapping("/user/logout")
-    @ApiOperation(value = "로그아웃", notes = "로그아웃", authorizations = @Authorization(value = "Authorization"))
+    @ApiOperation(value = "로그아웃", notes = "로그아웃합니다.", authorizations = @Authorization(value = "Authorization"))
     public ResponseEntity<BaseResponse> logout() throws Exception {
         return new ResponseEntity<>(userLoginService.logout(), HttpStatus.OK);
     }

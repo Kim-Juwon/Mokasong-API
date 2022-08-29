@@ -101,7 +101,7 @@ public class UserRegisterService {
         if (verificationCodeInRedisServer == null) {
             throw new VerificationCodeException(VERIFICATION_TIME_EXPIRE);
         }
-        // redis server에 있는 인증번호가 다른 경우
+        // redis server에 있는 인증번호와 다른 경우
         if (!verificationCodeInRedisServer.equals(verificationCode)) {
             throw new VerificationCodeException(VERIFICATION_CODE_NOT_EQUAL);
         }

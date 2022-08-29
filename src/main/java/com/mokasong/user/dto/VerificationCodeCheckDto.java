@@ -23,10 +23,10 @@ public class VerificationCodeCheckDto {
 
     @Schema(description = "새 비밀번호", required = true, nullable = false)
     // TODO: password pattern 정의하기
-    @NotBlank(groups = FindPassword.class)
+    @NotBlank(groups = FindPassword.class, message = "새 비밀번호는 필수입니다.")
     private String new_password;
 
-    @Schema(description = "인증번호를 검증하려는 목적", required = true, nullable = false, example = "email")
+    @Schema(description = "인증번호를 검증하려는 목적", required = true, nullable = false, example = "FIND_EMAIL")
     @NotBlank(groups = Default.class, message = "인증번호를 검증하려는 목적은 필수입니다.")
     @Pattern(groups = Default.class, regexp = "^(FIND_EMAIL|FIND_PASSWORD)$", message = "인증번호를 검증하려는 목적은 FIND_EMAIL 또는 FIND_PASSWORD 입니다.")
     private String purpose;
