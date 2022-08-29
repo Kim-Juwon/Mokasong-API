@@ -24,12 +24,12 @@ public class User {
     private Date updated_at;
 
     // 회원가입 대기 상태로 전환
-    public void initializeForStandingByRegister(UserRegisterDto userRegisterDto, String registerToken) {
-        this.email = userRegisterDto.getEmail();
-        this.password = BCrypt.hashpw(userRegisterDto.getPassword(), BCrypt.gensalt()); // bcrypt 암호화
-        this.phone_number = userRegisterDto.getPhone_number();
+    public void initializeForStandingByRegister(UserRegisterDto dto, String registerToken) {
+        this.email = dto.getEmail();
+        this.password = BCrypt.hashpw(dto.getPassword(), BCrypt.gensalt()); // bcrypt 암호화
+        this.phone_number = dto.getPhone_number();
         this.authority = Authority.STAND_BY_REGISTER;
-        this.name = userRegisterDto.getName();
+        this.name = dto.getName();
         this.register_token = registerToken;
         this.is_deleted = false;
         this.created_at = new Date();
@@ -41,15 +41,18 @@ public class User {
         this.updated_at = new Date();
     }
 
-    public void changeLastLoginTime() {
+    public void changeLastLoginTimeToNow() {
         this.last_login_time = new Date();
+        this.updated_at = new Date();
     }
 
-    public void changeLastLogoutTime() {
+    public void changeLastLogoutTimeToNow() {
         this.last_logout_time = new Date();
+        this.updated_at = new Date();
     }
 
     public void changeToNewPassword(String newPassword) {
         this.password = BCrypt.hashpw(newPassword, BCrypt.gensalt());
+        this.updated_at = new Date();
     }
 }
