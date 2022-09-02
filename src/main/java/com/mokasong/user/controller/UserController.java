@@ -1,6 +1,6 @@
 package com.mokasong.user.controller;
 
-import com.mokasong.common.annotation.LoginRequired;
+import com.mokasong.common.annotation.AccessibleOnly;
 import com.mokasong.common.response.BaseResponse;
 import com.mokasong.user.dto.LoginDto;
 import com.mokasong.user.dto.UserVerifyDto;
@@ -39,6 +39,21 @@ public class UserController {
     @Autowired
     public UserController(UserService userService) {
         this.userService = userService;
+    }
+
+    @Tag(name = "User API")
+    @PostMapping("/login")
+    @ApiOperation(value = "로그인", notes = "로그인합니다.")
+    public ResponseEntity<BaseResponse> login(@RequestBody @Valid LoginDto dto) throws Exception {
+        return new ResponseEntity<>(userService.login(dto), HttpStatus.OK);
+    }
+
+    @AccessibleOnly({REGULAR, ADMIN})
+    @Tag(name = "User API")
+    @PostMapping("/logout")
+    @ApiOperation(value = "로그아웃", notes = "로그아웃합니다.", authorizations = @Authorization(value = "Authorization"))
+    public ResponseEntity<BaseResponse> logout() throws Exception {
+        return new ResponseEntity<>(userService.logout(), HttpStatus.OK);
     }
 
     @Tag(name = "User API")
@@ -122,18 +137,8 @@ public class UserController {
         return new ResponseEntity<>(userService.changeToStandingByRegister(dto), HttpStatus.OK);
     }
 
-    @Tag(name = "User API")
-    @PostMapping("/login")
-    @ApiOperation(value = "로그인", notes = "로그인합니다.")
-    public ResponseEntity<BaseResponse> login(@RequestBody @Valid LoginDto dto) throws Exception {
-        return new ResponseEntity<>(userService.login(dto), HttpStatus.OK);
-    }
-
-    @LoginRequired({REGULAR, ADMIN})
-    @Tag(name = "User API")
-    @PostMapping("/logout")
-    @ApiOperation(value = "로그아웃", notes = "로그아웃합니다.", authorizations = @Authorization(value = "Authorization"))
-    public ResponseEntity<BaseResponse> logout() throws Exception {
-        return new ResponseEntity<>(userService.logout(), HttpStatus.OK);
+    @PostMapping("/test")
+    public LoginDto test(LoginDto loginDto) {
+        return loginDto;
     }
 }

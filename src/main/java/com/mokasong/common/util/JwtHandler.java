@@ -20,7 +20,7 @@ public class JwtHandler {
     private final String secretKey;
 
     public JwtHandler() {
-        secretKey = RandomStringUtils.randomAlphanumeric(300);
+        secretKey = RandomStringUtils.randomAlphanumeric(500);
     }
 
     public String generateToken(Long userId, int hour) throws Exception {
@@ -54,6 +54,7 @@ public class JwtHandler {
         return calendar.getTime();
     }
 
+    /*
     public String getTokenInHttpHeader() {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
         String token = request.getHeader("Authorization");
@@ -73,4 +74,5 @@ public class JwtHandler {
         // 토큰에 문제가 있는 경우는 JwtHandler에서 처리된다.
         return token.substring(7, tokenLength);
     }
+     */
 }
