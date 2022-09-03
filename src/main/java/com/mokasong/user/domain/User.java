@@ -3,11 +3,12 @@ package com.mokasong.user.domain;
 import com.mokasong.user.dto.UserRegisterDto;
 import com.mokasong.user.state.Authority;
 import lombok.Getter;
+import lombok.ToString;
 import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.Date;
 
-@Getter
+@Getter @ToString
 public class User {
     private Long user_id;
     private String email;

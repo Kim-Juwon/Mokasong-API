@@ -19,11 +19,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.util.HashMap;
 
 import static com.mokasong.common.exception.CustomExceptionList.*;
+import static com.mokasong.common.util.UserHandler.getUser;
 
 @Service
 @Validated
@@ -75,14 +81,7 @@ public class UserService {
 
     @Transactional
     public BaseResponse logout() throws Exception {
-        String accessToken = jwtHandler.getTokenInHttpHeader();
-        Long userId = jwtHandler.discoverUserId(accessToken);
-        User user = userMapper.getUserById(userId);
-
-        // access token에 담긴 user id로 유저를 조회가 안된다면
-        if (user == null) {
-            throw new LogoutFailException(USER_NOT_EXIST);
-        }
+        User user = getUser();
 
         user.changeLastLogoutTimeToNow();
         userMapper.updateUser(user);
