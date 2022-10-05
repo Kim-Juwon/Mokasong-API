@@ -1,4 +1,4 @@
-package com.mokasong.user.dto;
+package com.mokasong.user.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;

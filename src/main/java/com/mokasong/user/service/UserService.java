@@ -5,10 +5,10 @@ import com.mokasong.common.response.NormalResponse;
 import com.mokasong.common.state.RedisCategory;
 import com.mokasong.common.util.*;
 import com.mokasong.user.domain.User;
-import com.mokasong.user.dto.LoginDto;
-import com.mokasong.user.dto.UserVerifyDto;
-import com.mokasong.user.dto.UserRegisterDto;
-import com.mokasong.user.dto.VerificationCodeCheckDto;
+import com.mokasong.user.dto.request.LoginDto;
+import com.mokasong.user.dto.request.UserVerifyDto;
+import com.mokasong.user.dto.request.UserRegisterDto;
+import com.mokasong.user.dto.request.VerificationCodeCheckDto;
 import com.mokasong.user.exception.*;
 import com.mokasong.user.repository.UserMapper;
 import com.mokasong.user.state.Authority;
@@ -19,12 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.util.HashMap;
 
@@ -119,7 +114,7 @@ public class UserService {
 
     @Transactional(readOnly = true)
     @Validated(RegisterCellPhone.class)
-    public BaseResponse sendCodeForRegisterCellphone(UserVerifyDto dto) throws Exception {
+    public BaseResponse sendCodeForRegisterCellphone(@Valid UserVerifyDto dto) throws Exception {
         // 휴대폰 번호가 이미 회원 정보에 존재한다면
         if (this.phoneNumberExist(dto.getPhone_number())) {
             throw new VerificationCodeSendException(PHONE_NUMBER_ALREADY_EXIST);
