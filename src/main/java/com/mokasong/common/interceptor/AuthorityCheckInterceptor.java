@@ -1,6 +1,6 @@
 package com.mokasong.common.interceptor;
 
-import com.mokasong.common.annotation.AccessibleOnly;
+import com.mokasong.common.annotation.Login;
 import com.mokasong.common.exception.custom.JWTPreconditionException;
 import com.mokasong.user.domain.User;
 import com.mokasong.user.exception.UnauthorizedException;
@@ -19,12 +19,12 @@ import static com.mokasong.common.exception.CustomExceptionList.*;
 import static com.mokasong.user.state.Authority.*;
 
 @Component
-public class Interceptor implements HandlerInterceptor {
+public class AuthorityCheckInterceptor implements HandlerInterceptor {
     private UserMapper userMapper;
     private JwtHandler jwtHandler;
 
     @Autowired
-    public Interceptor(UserMapper userMapper, JwtHandler jwtHandler) {
+    public AuthorityCheckInterceptor(UserMapper userMapper, JwtHandler jwtHandler) {
         this.userMapper = userMapper;
         this.jwtHandler = jwtHandler;
     }
@@ -36,27 +36,25 @@ public class Interceptor implements HandlerInterceptor {
         }
         HandlerMethod handlerMethod = (HandlerMethod) handler;
 
-        AccessibleOnly accessibleOnly = handlerMethod.getMethod().getDeclaredAnnotation(AccessibleOnly.class);
+        Login login = handlerMethod.getMethod().getDeclaredAnnotation(Login.class);
 
         // 권한이 필요없다면
-        if (accessibleOnly == null) {
+        if (login == null) {
             return true;
         }
 
-        Authority[] authorities = accessibleOnly.value();
+        Authority[] authorities = login.value();
         if (authorities.length == 0) {
             return true;
         }
 
         String accessToken = request.getHeader("Authorization");
 
-        // 헤더에 access token이 없을 경우
         if (accessToken == null) {
             throw new JWTPreconditionException(TOKEN_NOT_EXIST_IN_REQUEST);
         }
 
         int tokenLength = accessToken.length();
-        // 앞 7글자가 "Bearer " 가 아닌 경우
         if ((tokenLength < 7) || (!accessToken.substring(0, 7).equals("Bearer "))) {
             throw new JWTPreconditionException(TOKEN_NOT_CONTAIN_BEARER);
         }
@@ -65,21 +63,20 @@ public class Interceptor implements HandlerInterceptor {
         Long userId = jwtHandler.discoverUserId(accessToken);
         User user = userMapper.getUserById(userId);
 
-        // 유저가 조회되지 않는다면
         if (user == null) {
             throw new UnauthorizedException(USER_NOT_EXIST);
         }
-        // 유저가 회원가입 대기상태라면
         if (user.getAuthority() == STAND_BY_REGISTER) {
             throw new UnauthorizedException(UNAUTHORIZED);
         }
 
         for (Authority authority : authorities) {
-            if (user.getAuthority() == authority) {
+            if (user.getAuthority().equals(authority)) {
                 request.setAttribute("user", user);
                 return true;
             }
         }
+
         return false;
     }
 }

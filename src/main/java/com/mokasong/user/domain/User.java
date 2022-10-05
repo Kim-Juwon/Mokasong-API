@@ -1,6 +1,6 @@
 package com.mokasong.user.domain;
 
-import com.mokasong.user.dto.UserRegisterDto;
+import com.mokasong.user.dto.request.UserRegisterDto;
 import com.mokasong.user.state.Authority;
 import lombok.Getter;
 import lombok.ToString;

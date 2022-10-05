@@ -1,11 +1,11 @@
 package com.mokasong.user.controller;
 
-import com.mokasong.common.annotation.AccessibleOnly;
+import com.mokasong.common.annotation.Login;
 import com.mokasong.common.response.BaseResponse;
-import com.mokasong.user.dto.LoginDto;
-import com.mokasong.user.dto.UserVerifyDto;
-import com.mokasong.user.dto.UserRegisterDto;
-import com.mokasong.user.dto.VerificationCodeCheckDto;
+import com.mokasong.user.dto.request.LoginDto;
+import com.mokasong.user.dto.request.UserVerifyDto;
+import com.mokasong.user.dto.request.UserRegisterDto;
+import com.mokasong.user.dto.request.VerificationCodeCheckDto;
 import com.mokasong.user.exception.UserInformationReadException;
 import com.mokasong.user.exception.VerificationCodeCheckException;
 import com.mokasong.user.exception.VerificationCodeSendException;
@@ -48,7 +48,7 @@ public class UserController {
         return new ResponseEntity<>(userService.login(dto), HttpStatus.OK);
     }
 
-    @AccessibleOnly({REGULAR, ADMIN})
+    @Login({REGULAR, ADMIN})
     @Tag(name = "User API")
     @PostMapping("/logout")
     @ApiOperation(value = "로그아웃", notes = "로그아웃합니다.", authorizations = @Authorization(value = "Authorization"))
@@ -135,10 +135,5 @@ public class UserController {
     @ApiOperation(value = "회원가입 대기 상태로 전환", notes = "회원가입 대기 상태로 전환합니다.")
     public ResponseEntity<BaseResponse> changeToStandingByRegister(@RequestBody @Valid UserRegisterDto dto) throws Exception {
         return new ResponseEntity<>(userService.changeToStandingByRegister(dto), HttpStatus.OK);
-    }
-
-    @PostMapping("/test")
-    public LoginDto test(LoginDto loginDto) {
-        return loginDto;
     }
 }
