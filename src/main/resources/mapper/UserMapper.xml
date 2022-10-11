@@ -7,86 +7,87 @@
 <!-- Mapper를 사용하는 Repository의 전체 경로를 적어줘야함. -->
 <mapper namespace="com.mokasong.user.repository.UserMapper">
     <insert id="createUser" parameterType="com.mokasong.user.domain.User" useGeneratedKeys="true" keyProperty="user_id">
-        INSERT INTO users
-        (email, password, phone_number, address, authority, name, last_login_time, last_logout_time, register_token, is_deleted, created_at, updated_at)
+        INSERT INTO mokasong.users
+        (email, password, phone_number, address, authority, `name`, last_login_time, last_logout_time, register_token, is_deleted, created_at, updated_at)
         VALUES(#{email}, #{password}, #{phone_number}, #{address}, #{authority}, #{name}, #{last_login_time}, #{last_logout_time}, #{register_token}, #{is_deleted}, #{created_at}, #{updated_at})
     </insert>
 
     <select id="getUserById" resultType="com.mokasong.user.domain.User">
         SELECT *
-        FROM users
-        WHERE user_id = #{userId}
+        FROM mokasong.users
+        WHERE user_id = #{userId} AND is_deleted = 0
     </select>
 
     <select id="getUserByEmail" resultType="com.mokasong.user.domain.User">
         SELECT *
-        FROM users
-        WHERE email = #{email}
+        FROM mokasong.users
+        WHERE email = #{email} AND is_deleted = 0
     </select>
 
     <select id="getUserByPhoneNumber" resultType="com.mokasong.user.domain.User">
         SELECT *
-        FROM users
-        WHERE phone_number = #{phoneNumber}
+        FROM mokasong.users
+        WHERE phone_number = #{phoneNumber} AND is_deleted = 0
     </select>
 
     <select id="getUserByName" resultType="com.mokasong.user.domain.User">
         SELECT *
-        FROM users
-        WHERE name = #{name}
+        FROM mokasong.users
+        WHERE name = #{name} AND is_deleted = 0
     </select>
 
     <select id="getUserByNameAndPhoneNumber" resultType="com.mokasong.user.domain.User">
         SELECT *
-        FROM users
-        WHERE name = #{name} AND phone_number = #{phoneNumber}
+        FROM mokasong.users
+        WHERE name = #{name} AND phone_number = #{phoneNumber} AND is_deleted = 0
     </select>
 
     <select id="getUserByNameAndEmail" resultType="com.mokasong.user.domain.User">
         SELECT *
-        FROM users
-        WHERE name = #{name} AND email = #{email}
+        FROM mokasong.users
+        WHERE name = #{name} AND email = #{email} AND is_deleted = 0
     </select>
 
     <select id="getUserByRegisterToken" resultType="com.mokasong.user.domain.User">
         SELECT *
-        FROM users
-        WHERE register_token = #{registerToken}
+        FROM mokasong.users
+        WHERE register_token = #{registerToken} AND is_deleted = 0
     </select>
 
     <select id="getUserBySecretKey" resultType="com.mokasong.user.domain.User">
         SELECT *
-        FROM users
-        WHERE secret_key = #{secretKey}
+        FROM mokasong.users
+        WHERE secret_key = #{secretKey} AND is_deleted = 0
     </select>
 
     <select id="getUserIdByEmail" resultType="_long">
         SELECT user_id
-        FROM users
-        WHERE email = #{email}
+        FROM mokasong.users
+        WHERE email = #{email} AND is_deleted = 0
     </select>
 
     <update id="updateUser" parameterType="com.mokasong.user.domain.User">
-        UPDATE users
+        UPDATE mokasong.users
         SET
             email = #{email},
             password = #{password},
-            phone_number = #{phone_number},
+            phone_number = #{phoneNumber},
             address = #{address},
             authority = #{authority},
-            name = #{name},
-            last_login_time = #{last_login_time},
-            last_logout_time = #{last_logout_time},
-            register_token = #{register_token},
-            is_deleted = #{is_deleted},
-            created_at = #{created_at},
-            updated_at = #{updated_at}
-        WHERE user_id = #{user_id}
+            `name` = #{name},
+            last_login_time = #{lastLoginTime},
+            last_logout_time = #{lastLogoutTime},
+            register_token = #{registerToken},
+            secret_key = #{secretKey},
+            is_deleted = #{isDeleted},
+            created_at = #{createdAt},
+            updated_at = #{updatedAt}
+        WHERE user_id = #{userId}
     </update>
 
     <delete id="deleteUserById">
-        DELETE
-        FROM users
+        UPDATE koin.users
+        SET is_deleted = 0
         WHERE user_id = #{userId}
     </delete>
 </mapper>

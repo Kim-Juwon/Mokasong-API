@@ -12,10 +12,10 @@ import java.time.Duration;
 public class RedisClient {
     private ValueOperations<String, String> valueOperations;
 
-    private final String PREFIX1 = "verification-code/register-cellphone/";
-    private final String PREFIX2 = "verification-token/change-to-stand-by-register/";
-    private final String PREFIX3 = "verification-code/find-email/";
-    private final String PREFIX4 = "verification-code/find-password/";
+    private final String PREFIX1 = "verification-code:register-cellphone:";
+    private final String PREFIX2 = "verification-token:change-to-stand-by-register:";
+    private final String PREFIX3 = "verification-code:find-email:";
+    private final String PREFIX4 = "verification-code:find-password:";
 
     @Autowired
     public RedisClient(RedisTemplate<String, String> redisTemplate) {

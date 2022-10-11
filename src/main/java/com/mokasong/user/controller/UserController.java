@@ -1,20 +1,22 @@
 package com.mokasong.user.controller;
 
 import com.mokasong.common.annotation.Login;
-import com.mokasong.common.response.BaseResponse;
-import com.mokasong.user.dto.request.LoginDto;
-import com.mokasong.user.dto.request.UserVerifyDto;
-import com.mokasong.user.dto.request.UserRegisterDto;
-import com.mokasong.user.dto.request.VerificationCodeCheckDto;
-import com.mokasong.user.exception.UserInformationReadException;
-import com.mokasong.user.exception.VerificationCodeCheckException;
-import com.mokasong.user.exception.VerificationCodeSendException;
+import com.mokasong.common.exception.custom.UnprocessableEntityException;
+import com.mokasong.common.dto.response.SuccessfulResponse;
+import com.mokasong.common.exception.ErrorCode;
+import com.mokasong.user.dto.request.LoginRequest;
+import com.mokasong.user.dto.request.UserVerifyRequest;
+import com.mokasong.user.dto.request.RegisterRequest;
+import com.mokasong.user.dto.request.CodeCheckRequest;
+import com.mokasong.common.dto.response.DuplicateCheckResponse;
+import com.mokasong.user.dto.response.LoginSuccessResponse;
+import com.mokasong.user.dto.response.VerificationCodeSendResponse;
 import com.mokasong.user.service.UserService;
+import com.mokasong.user.service.UserServiceImpl;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.Authorization;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -23,8 +25,6 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.groups.Default;
 
-import static com.mokasong.common.exception.CustomExceptionList.INVALID_REQUEST_DATA;
-import static com.mokasong.common.exception.CustomExceptionList.REQUIRED_TYPE_EMAIL_OR_PHONENUMBER;
 import static com.mokasong.common.util.StringHandler.isEmailPattern;
 import static com.mokasong.common.util.StringHandler.isPhoneNumberPattern;
 import static com.mokasong.user.state.Authority.*;
@@ -34,106 +34,116 @@ import static com.mokasong.user.state.Authority.*;
 @Validated
 @Tag(name = "User API", description = "유저 관련 API")
 public class UserController {
-    private UserService userService;
+    private final UserService userService;
 
     @Autowired
-    public UserController(UserService userService) {
+    public UserController(UserServiceImpl userService) {
         this.userService = userService;
     }
 
     @Tag(name = "User API")
     @PostMapping("/login")
     @ApiOperation(value = "로그인", notes = "로그인합니다.")
-    public ResponseEntity<BaseResponse> login(@RequestBody @Valid LoginDto dto) throws Exception {
-        return new ResponseEntity<>(userService.login(dto), HttpStatus.OK);
+    public ResponseEntity<LoginSuccessResponse> login(@RequestBody @Valid LoginRequest requestBody) throws Exception {
+        return ResponseEntity
+                .ok()
+                .body(userService.login(requestBody));
     }
 
     @Login({REGULAR, ADMIN})
     @Tag(name = "User API")
     @PostMapping("/logout")
     @ApiOperation(value = "로그아웃", notes = "로그아웃합니다.", authorizations = @Authorization(value = "Authorization"))
-    public ResponseEntity<BaseResponse> logout() throws Exception {
-        return new ResponseEntity<>(userService.logout(), HttpStatus.OK);
+    public ResponseEntity<SuccessfulResponse> logout() throws Exception {
+        return ResponseEntity
+                .ok()
+                .body(userService.logout());
     }
 
     @Tag(name = "User API")
-    @GetMapping("/existence")
+    @GetMapping("/duplicate-status")
     @ApiOperation(value = "이메일/휴대폰번호 중복 확인", notes = "이메일/휴대폰번호가 회원 정보에 이미 존재하는지 확인합니다.")
-    public ResponseEntity<BaseResponse> getExistence(@RequestParam("data") @NotBlank(message = "이메일 or 휴대폰번호는 필수입니다.") String data) throws Exception {
-        BaseResponse response;
+    public ResponseEntity<DuplicateCheckResponse> checkDuplicateStatus(
+            @RequestParam("data") @NotBlank(message = "이메일 or 휴대폰번호는 필수입니다.") String data) throws Exception {
+        DuplicateCheckResponse response;
 
-        // 이메일 형식이라면
         if (isEmailPattern(data)) {
-            response = userService.getExistenceOfEmail(data);
+            response = userService.getDuplicateStatusOfEmail(data);
         }
-        // 휴대폰번호 형식이라면
         else if (isPhoneNumberPattern(data)) {
-            response = userService.getExistenceOfCellphone(data);
+            response = userService.getDuplicateStatusOfPhoneNumber(data);
         }
-        // 그 외 형식이라면
         else {
-            throw new UserInformationReadException(REQUIRED_TYPE_EMAIL_OR_PHONENUMBER);
+            throw new UnprocessableEntityException("data가 유효하지 않습니다.", 0);
         }
 
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return ResponseEntity
+                .ok()
+                .body(response);
     }
 
     @Tag(name = "User API")
     @PostMapping("/verification-code/send")
-    @ApiOperation(value = "인증번호 전송", notes = "인증번호를 전송합니다.")
-    public ResponseEntity<BaseResponse> sendCode(@RequestBody @Validated(Default.class) UserVerifyDto dto) throws Exception {
-        BaseResponse response;
+    @ApiOperation(value = "인증번호 발송", notes = "인증번호를 발송합니다.")
+    public ResponseEntity<VerificationCodeSendResponse> sendCode(
+            @RequestBody @Validated(Default.class) UserVerifyRequest requestBody) throws Exception {
+        VerificationCodeSendResponse response;
 
-        // 휴대폰 번호 등록이라면 (회원가입시의 휴대폰 번호 인증 or 회원 정보 수정시 휴대폰 번호 인증)
-        if (dto.getPurpose().equals("REGISTER_CELLPHONE")) {
-            response = userService.sendCodeForRegisterCellphone(dto);
-        }
-        // 이메일 찾기라면
-        else if (dto.getPurpose().equals("FIND_EMAIL")) {
-            response = userService.sendCodeForFindEmail(dto);
-        }
-        // 비밀번호 찾기라면
-        else if (dto.getPurpose().equals("FIND_PASSWORD")) {
-            response = userService.sendCodeForFindPassword(dto);
-        }
-        // purpose 값에 엉뚱한 값이 들어왔다면 (@Validated로 이미 검증하지만, 확실한 검증을 하기 위함)
-        else {
-            throw new VerificationCodeSendException(INVALID_REQUEST_DATA);
+        switch (requestBody.getPurpose()) {
+            case "REGISTER_CELLPHONE":
+                response = userService.sendCodeForRegisterCellphone(requestBody);
+                break;
+            case "FIND_EMAIL":
+                response = userService.sendCodeForFindEmail(requestBody);
+                break;
+            case "FIND_PASSWORD":
+                response = userService.sendCodeForFindPassword(requestBody);
+                break;
+            default:
+                throw new UnprocessableEntityException("purpose가 유효하지 않습니다.", 0);
         }
 
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return ResponseEntity
+                .ok()
+                .body(response);
     }
 
     @Tag(name = "User API")
     @PostMapping("/verification-code/check")
     @ApiOperation(value = "인증번호 확인", notes = "이메일/휴대폰으로 전송했던 인증번호를 확인합니다.")
-    public ResponseEntity<BaseResponse> checkCode(@RequestBody @Validated(Default.class) VerificationCodeCheckDto dto) throws Exception {
-        BaseResponse response;
+    public ResponseEntity<SuccessfulResponse> checkCode(
+            @RequestBody @Validated(Default.class) CodeCheckRequest requestBody) throws Exception {
+        SuccessfulResponse response;
 
-        // 휴대폰 번호 등록이라면 (회원가입시의 휴대폰 번호 인증 or 회원 정보 수정시 휴대폰 번호 수정할때)
-        if (dto.getPurpose().equals("REGISTER_CELLPHONE")) {
-            response = userService.checkCodeForRegisterCellphone(dto);
-        }
-        // 이메일 찾기 인증번호 확인이라면
-        else if (dto.getPurpose().equals("FIND_EMAIL")) {
-            response = userService.checkCodeForFindEmail(dto);
-        }
-        // 비밀번호 찾기 인증번호 확인(동시에 비밀번호도 변경)이라면
-        else if (dto.getPurpose().equals("FIND_PASSWORD")) {
-            response = userService.checkCodeFindPassword(dto);
-        }
-        // purpose 값에 엉뚱한 값이 들어왔다면 (@Validated로 이미 검증하지만, 확실한 검증을 하기 위함)
-        else {
-            throw new VerificationCodeCheckException(INVALID_REQUEST_DATA);
+        switch (requestBody.getPurpose()) {
+            // 휴대폰 번호 등록이라면 (회원가입시의 휴대폰 번호 인증 or 회원 정보 수정시 휴대폰 번호 수정할때)
+            case "REGISTER_CELLPHONE":
+                response = userService.checkCodeForRegisterCellphone(requestBody);
+                break;
+            // 이메일 찾기 인증번호 확인이라면
+            case "FIND_EMAIL":
+                response = userService.checkCodeForFindEmail(requestBody);
+                break;
+            // 비밀번호 찾기 인증번호 확인(동시에 비밀번호도 변경)이라면
+            case "FIND_PASSWORD":
+                response = userService.checkCodeFindPassword(requestBody);
+                break;
+            default:
+                throw new UnprocessableEntityException("purpose가 유효하지 않습니다.", ErrorCode.UNPROCESSABLE_ENTITY.getErrorCode());
         }
 
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return ResponseEntity
+                .ok()
+                .body(response);
     }
 
     @Tag(name = "User API")
     @PostMapping("/register/standby")
     @ApiOperation(value = "회원가입 대기 상태로 전환", notes = "회원가입 대기 상태로 전환합니다.")
-    public ResponseEntity<BaseResponse> changeToStandingByRegister(@RequestBody @Valid UserRegisterDto dto) throws Exception {
-        return new ResponseEntity<>(userService.changeToStandingByRegister(dto), HttpStatus.OK);
+    public ResponseEntity<SuccessfulResponse> changeToStandingByRegister(
+            @RequestBody @Valid RegisterRequest requestBody) throws Exception {
+        return ResponseEntity
+                .ok()
+                .body(userService.changeToStandingByRegister(requestBody));
     }
 }

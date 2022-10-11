@@ -1,12 +1,10 @@
 package com.mokasong.common.exception.handler;
 
-import com.auth0.jwt.exceptions.JWTCreationException;
-import com.auth0.jwt.exceptions.JWTVerificationException;
-import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.mokasong.common.exception.CustomException;
-import com.mokasong.common.response.ExceptionResponse;
-import com.mokasong.common.response.detail.RequestDataInvalidExceptionResponse;
+import com.mokasong.common.dto.response.ExceptionResponse;
+import com.mokasong.common.dto.response.RequestDataInvalidExceptionResponse;
 import net.nurigo.sdk.message.exception.*;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindException;
 import org.springframework.validation.ObjectError;
@@ -18,99 +16,48 @@ import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import java.util.*;
 
-import static com.mokasong.common.exception.CustomExceptionList.*;
-
-/**
- *  모든 Exception throw에 대한 처리는 GlobalExceptionHandler class의 exceptionHandle() 메소드로 처리합니다.
- *
- *  -------------------------------- 처리하는 exception 종류는 다음과 같습니다. --------------------------------
- *
- *  - 사용자 정의 Exception (김주원이 직접 만든 CustomException의 sub class exception들을 처리)
- *
- *  - 문자 발송 서비스 Exception (net.nurigo.sdk.message.exception에 정의되어 있음)
- *      - 전부 server의 문제라고 간주하고 응답합니다. (http status code: 500)
- *
- *  - JWT 관련 Exception (com.auth0.jwt.exceptions에 정의되어 있음)
- *      - JWTCreationException인 경우
- *          - 토큰 발급시 문제가 생겼다는 정보와 함께 응답합니다.
- *      - JWTVerificationException인 경우
- *          - TokenExpiredException인 경우
- *              - 토큰의 유효시간이 지났다고 응답합니다.
- *          - 그 외
- *              - 토큰을 변경하여 요청했다고 간주하여 응답합니다.
- *
- *  - request 데이터 유효성 검증 Exception
- *      - 유효성 검증에 통과하지 못한 내용을 포함하여 응답합니다.
- *          - org.springframework.validation.BindException인 경우 (request body)
- *          - javax.validation.ConstraintViolationException인 경우 (query paramter 또는 path variable)
- *
- *  - 그 외 예측할 수 없는 Exception인 경우
- *      - exception message와 함께 error code는 999로, http status code는 500으로 응답합니다.
- *
- *  구체적인 로직은 코드를 참고해주세요.
- *
- *  -----------------------------------------------------------------------------------------------------
- */
+import static com.mokasong.common.exception.ErrorCode.*;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     @ExceptionHandler(Throwable.class)
-    public ResponseEntity<ExceptionResponse> exceptionHandle(Throwable e, HandlerMethod handlerMethod) {
-        /* TODO: 카카오톡 알림 서비스 구축할때 CriticalException에 대해 개발자에게 카카오톡을 보내주는 코드 작성하기,
-                 CriticalException을 어디에 적용할 것인지 생각해보기 */
-
-        // Custom Exception
+    public ResponseEntity<Object> handleException(Throwable e, HandlerMethod handlerMethod) {
         if (e instanceof CustomException) {
-            return new ResponseEntity<>(new ExceptionResponse(e.getMessage(),
-                    ((CustomException) e).getErrorCode()),
-                    ((CustomException) e).getHttpStatusCode());
+            // TODO: Critical Exception에 대한 알림 코드 작성
+
+            return ResponseEntity
+                    .status(((CustomException) e).getHttpStatus())
+                    .body(
+                            ExceptionResponse.builder()
+                                    .message(e.getMessage())
+                                    .errorCode(((CustomException) e).getErrorCode())
+                                    .build()
+                    );
         }
 
-        // 문자발송 서비스 Exception
+
         else if (this.isKindOfMessageSendException(e)) {
-            return new ResponseEntity<>(new ExceptionResponse(
-                    MESSAGE_SEND_HAS_PROBLEM.getMessage(),
-                    MESSAGE_SEND_HAS_PROBLEM.getErrorCode()),
-                    MESSAGE_SEND_HAS_PROBLEM.getHttpStatusCode());
+            // TODO: 알림 코드 작성
+
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(
+                            ExceptionResponse.builder()
+                                    .message(e.getMessage())
+                                    .errorCode(INTERNAL_SERVER_ERROR.getErrorCode())
+                                    .build()
+                    );
         }
 
-        // JWT 관련 Exception
-        else if (this.isKindOfJWTException(e)) {
-            // 토큰 발급 시 throw된 Exception
-            if (e instanceof JWTCreationException) {
-                return new ResponseEntity<>(new ExceptionResponse(
-                        TOKEN_CREATION_HAS_PROBLEM.getMessage(),
-                        TOKEN_CREATION_HAS_PROBLEM.getErrorCode()),
-                        TOKEN_CREATION_HAS_PROBLEM.getHttpStatusCode());
-            } else {
-                // 토큰 만료시 throw된 Exception
-                if (e instanceof TokenExpiredException) {
-                    return new ResponseEntity<>(new ExceptionResponse(
-                            TOKEN_EXPIRED.getMessage(),
-                            TOKEN_EXPIRED.getErrorCode()),
-                            TOKEN_EXPIRED.getHttpStatusCode());
-                }
-                // 그 외 Exception은 토큰 조작 감지로 간주
-                // TODO: 더 견고하게 처리할 수 없을지 생각해보기
-                else {
-                    return new ResponseEntity<>(new ExceptionResponse(
-                            TOKEN_DIRTY_DETECTED.getMessage(),
-                            TOKEN_DIRTY_DETECTED.getErrorCode()),
-                            TOKEN_DIRTY_DETECTED.getHttpStatusCode());
-                }
-            }
-        }
-
-        // 요청 데이터 유효성 검증 Exception
         else if (this.isKindOfRequestDataInvalidException(e)) {
-            List<String> dataValidationErrors = new ArrayList<>();
+            List<String> errorMessages = new LinkedList<>();
 
             // request body일 경우
             if (e instanceof BindException) {
                 List<ObjectError> errors = ((BindException) e).getAllErrors();
 
                 for (ObjectError error : errors) {
-                    dataValidationErrors.add(error.getDefaultMessage());
+                    errorMessages.add(error.getDefaultMessage());
                 }
             }
             // query paramter 또는 path variable일 경우
@@ -120,23 +67,32 @@ public class GlobalExceptionHandler {
                 Iterator<ConstraintViolation<?>> iterator = constraintViolationSet.iterator();
 
                 while (iterator.hasNext()) {
-                    dataValidationErrors.add(iterator.next().getMessage());
+                    errorMessages.add(iterator.next().getMessage());
                 }
             }
 
-            return new ResponseEntity<>(new RequestDataInvalidExceptionResponse(
-                    INVALID_REQUEST_DATA.getMessage(),
-                    INVALID_REQUEST_DATA.getErrorCode(),
-                    dataValidationErrors),
-                    INVALID_REQUEST_DATA.getHttpStatusCode());
+            return ResponseEntity
+                    .status(HttpStatus.UNPROCESSABLE_ENTITY)
+                    .body(
+                            RequestDataInvalidExceptionResponse.builder()
+                                    .message("요청에 제약조건에 맞지 않는 값이 들어있습니다.")
+                                    .errorCode(UNPROCESSABLE_ENTITY.getErrorCode())
+                                    .errorMessages(errorMessages)
+                                    .build()
+                    );
         }
 
-        // 그 외 예측할 수 없는 Exception일 경우
         else {
-            return new ResponseEntity<>(new ExceptionResponse(
-                    UNPREDICTABLE.getMessage(),
-                    UNPREDICTABLE.getErrorCode()),
-                    UNPREDICTABLE.getHttpStatusCode());
+            // TODO: 알림 코드 작성
+
+            return ResponseEntity
+                    .internalServerError()
+                    .body(
+                            ExceptionResponse.builder()
+                                    .message("예기치 않은 에러가 발생하였습니다.")
+                                    .errorCode(INTERNAL_SERVER_ERROR.getErrorCode())
+                                    .build()
+                    );
         }
     }
 
@@ -153,11 +109,6 @@ public class GlobalExceptionHandler {
             || (e instanceof NurigoMessageNotReceivedException)
             || (e instanceof NurigoUnknownException)
             || (e instanceof NurigoUnregisteredSenderIdException);
-    }
-
-    private boolean isKindOfJWTException(Throwable e) {
-        return (e instanceof JWTCreationException)
-            || (e instanceof JWTVerificationException);
     }
 
     private boolean isKindOfRequestDataInvalidException(Throwable e) {

@@ -1,9 +1,9 @@
 package com.mokasong.common.interceptor;
 
 import com.mokasong.common.annotation.Login;
-import com.mokasong.common.exception.custom.JWTPreconditionException;
+import com.mokasong.common.exception.custom.ForbiddenException;
+import com.mokasong.common.exception.custom.UnauthorizedException;
 import com.mokasong.user.domain.User;
-import com.mokasong.user.exception.UnauthorizedException;
 import com.mokasong.user.repository.UserMapper;
 import com.mokasong.common.util.JwtHandler;
 import com.mokasong.user.state.Authority;
@@ -15,7 +15,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import static com.mokasong.common.exception.CustomExceptionList.*;
+import static com.mokasong.common.exception.ErrorCode.*;
 import static com.mokasong.user.state.Authority.*;
 
 @Component
@@ -38,7 +38,6 @@ public class AuthorityCheckInterceptor implements HandlerInterceptor {
 
         Login login = handlerMethod.getMethod().getDeclaredAnnotation(Login.class);
 
-        // 권한이 필요없다면
         if (login == null) {
             return true;
         }
@@ -51,12 +50,12 @@ public class AuthorityCheckInterceptor implements HandlerInterceptor {
         String accessToken = request.getHeader("Authorization");
 
         if (accessToken == null) {
-            throw new JWTPreconditionException(TOKEN_NOT_EXIST_IN_REQUEST);
+            throw new UnauthorizedException("헤더에 토큰이 없습니다.", UNAUTHORIZED.getErrorCode());
         }
 
         int tokenLength = accessToken.length();
         if ((tokenLength < 7) || (!accessToken.substring(0, 7).equals("Bearer "))) {
-            throw new JWTPreconditionException(TOKEN_NOT_CONTAIN_BEARER);
+            throw new UnauthorizedException("토큰 조작이 감지되었습니다.", UNAUTHORIZED.getErrorCode());
         }
 
         accessToken = accessToken.substring(7, tokenLength);
@@ -64,10 +63,13 @@ public class AuthorityCheckInterceptor implements HandlerInterceptor {
         User user = userMapper.getUserById(userId);
 
         if (user == null) {
-            throw new UnauthorizedException(USER_NOT_EXIST);
+            throw new UnauthorizedException("토큰 조작이 감지되었습니다.", UNAUTHORIZED.getErrorCode());
         }
+
+        jwtHandler.validateToken(accessToken, user.getSecretKey());
+
         if (user.getAuthority() == STAND_BY_REGISTER) {
-            throw new UnauthorizedException(UNAUTHORIZED);
+            throw new UnauthorizedException("아직 정식 회원이 아닙니다.", -1);
         }
 
         for (Authority authority : authorities) {
@@ -77,6 +79,6 @@ public class AuthorityCheckInterceptor implements HandlerInterceptor {
             }
         }
 
-        return false;
+        throw new ForbiddenException("권한이 없습니다.", -1);
     }
 }
