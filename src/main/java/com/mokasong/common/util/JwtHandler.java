@@ -2,43 +2,71 @@ package com.mokasong.common.util;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.interfaces.DecodedJWT;
-import com.mokasong.common.exception.custom.JWTPreconditionException;
-import org.apache.commons.lang3.RandomStringUtils;
+import com.auth0.jwt.exceptions.TokenExpiredException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mokasong.common.exception.custom.ForbiddenException;
+import com.mokasong.common.exception.custom.InternalServerErrorException;
+import com.mokasong.common.exception.custom.UnauthorizedException;
 import org.springframework.stereotype.Component;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
-import javax.servlet.http.HttpServletRequest;
-import java.util.Calendar;
-import java.util.Date;
+import java.util.*;
 
-import static com.mokasong.common.exception.CustomExceptionList.*;
+import static com.mokasong.common.exception.ErrorCode.*;
 
 @Component
 public class JwtHandler {
-    private final String secretKey;
+    public String generateToken(Long userId, String secretKey, int hour) throws Exception {
+        Algorithm algorithm = Algorithm.HMAC256(secretKey);
 
-    public JwtHandler() {
-        secretKey = RandomStringUtils.randomAlphanumeric(500);
+        String token;
+        try {
+            token = JWT.create()
+                    .withExpiresAt(this.getExpirationTime(Calendar.HOUR, hour))
+                    .withClaim("userId", userId)
+                    .sign(algorithm);
+
+        } catch (Exception e) {
+            throw new InternalServerErrorException("토큰 발급중 문제가 발생하였습니다.", INTERNAL_SERVER_ERROR.getErrorCode());
+        }
+
+        return token;
     }
 
-    public String generateToken(Long userId, int hour) throws Exception {
-        Algorithm algorithm = Algorithm.HMAC256(this.secretKey);
+    public Long discoverUserId(String accessToken) throws Exception {
+        String[] divided = accessToken.split("\\.");
+        if (divided.length != 3) {
+            throw new UnauthorizedException("토큰 변경이 감지되었습니다.", UNAUTHORIZED.getErrorCode());
+        }
 
-        return JWT.create()
-                .withExpiresAt(getExpirationTime(Calendar.HOUR, hour))
-                .withClaim("userId", userId)
-                .sign(algorithm);
-    }
+        Long userId;
+        try {
+            String encodedPayload = divided[1];
+            String decodedPayload = new String(Base64.getDecoder().decode(encodedPayload));
 
-    public Long discoverUserId(String token) throws Exception {
-        Algorithm algorithm = Algorithm.HMAC256(this.secretKey);
-        DecodedJWT decodedJWT = JWT.require(algorithm).build().verify(token);
+            Map<String, Object> decodedPayloadMap = new ObjectMapper().readValue(decodedPayload, HashMap.class);
 
-        Long userId = decodedJWT.getClaim("userId").asLong();
+            Object userIdObj = decodedPayloadMap.get("userId");
+            Class<?> intType = userIdObj.getClass();
+
+            userId = intType.equals(Integer.class) ? ((Integer) userIdObj).longValue() : (Long) userIdObj;
+
+        } catch (Exception e) {
+            throw new UnauthorizedException("토큰 변경이 감지되었습니다.", UNAUTHORIZED.getErrorCode());
+        }
 
         return userId;
+    }
+
+    public void validateToken(String accessToken, String secretKey) throws Exception {
+        try {
+            Algorithm algorithm = Algorithm.HMAC256(secretKey);
+            JWT.require(algorithm).build().verify(accessToken);
+        } catch (TokenExpiredException e) {
+            throw new ForbiddenException("토큰 유효 시간이 만료되었습니다.", UNAUTHORIZED.getErrorCode());
+        }
+        catch (Exception e) {
+            throw new UnauthorizedException("토큰 변경이 감지되었습니다.", UNAUTHORIZED.getErrorCode());
+        }
     }
 
     /**

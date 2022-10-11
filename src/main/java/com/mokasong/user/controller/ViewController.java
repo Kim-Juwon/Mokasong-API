@@ -1,20 +1,24 @@
 package com.mokasong.user.controller;
 
-import com.mokasong.user.service.UserService;
+import com.mokasong.user.service.UserServiceImpl;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import springfox.documentation.annotations.ApiIgnore;
 
+import javax.validation.constraints.NotNull;
+
 @Controller
 @ApiIgnore
-public class RegisterViewController {
-    private UserService userService;
+@Validated
+public class ViewController {
+    private final UserServiceImpl userService;
 
     @Autowired
-    public RegisterViewController(UserService userService) {
+    public ViewController(UserServiceImpl userService) {
         this.userService = userService;
     }
 
@@ -27,7 +31,7 @@ public class RegisterViewController {
 
     @GetMapping("/user/register/{register-token}")
     @ApiOperation(value = "회원가입 완료 후 /user/register로 리다이렉트", notes = "회원가입 대기 상태에서 완전한 회원가입 상태로 전환후 /user/register로 리다이렉트합니다.")
-    public String register(@PathVariable("register-token") String registerToken) throws Exception {
+    public String register(@PathVariable("register-token") @NotNull String registerToken) throws Exception {
         userService.register(registerToken);
         return "redirect:/user/register";
     }

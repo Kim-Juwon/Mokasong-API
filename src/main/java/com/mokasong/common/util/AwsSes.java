@@ -18,14 +18,14 @@ public class AwsSes {
     @Value("${aws.ses.from}")
     private String FROM;
 
-    public SendEmailResult sendEmail(String to, String subject, String textBody) {
+    public SendEmailResult sendEmail(String to, String subject, String htmlBody) {
         SendEmailRequest request = new SendEmailRequest()
             .withDestination(
                     new Destination().withToAddresses(to))
             .withMessage(new Message()
                     .withBody(new Body()
-                            .withText(new Content()
-                                    .withCharset("UTF-8").withData(textBody)))
+                            .withHtml(new Content()
+                                    .withCharset("UTF-8").withData(htmlBody)))
                     .withSubject(new Content()
                             .withCharset("UTF-8").withData(subject)))
             .withSource(FROM);
