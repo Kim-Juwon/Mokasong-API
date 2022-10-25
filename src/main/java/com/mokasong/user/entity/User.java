@@ -1,10 +1,9 @@
-package com.mokasong.user.domain;
+package com.mokasong.user.entity;
 
 import com.mokasong.user.dto.request.RegisterRequest;
 import com.mokasong.user.state.Authority;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.mindrot.jbcrypt.BCrypt;
 
@@ -12,13 +11,11 @@ import java.util.Date;
 
 @Getter
 @NoArgsConstructor
-@ToString
 public class User {
     private Long userId;
     private String email;
     private String password;
     private String phoneNumber;
-    private String address;
     private Authority authority;
     private String name;
     private Date lastLoginTime;

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mokasong.user.repository.UserMapper">
+    <insert id="createUser" parameterType="com.mokasong.user.entity.User" useGeneratedKeys="true" keyProperty="userId">
+        INSERT INTO `mokasong`.`users`
+        (`email`, `password`, `phone_number`, `authority`, `name`, `register_token`, `secret_key`)
+        VALUES(#{email}, #{password}, #{phoneNumber}, #{authority}, #{name}, #{registerToken}, #{secretKey})
+    </insert>
+
+    <select id="getUserById" resultType="com.mokasong.user.entity.User">
+        SELECT *
+        FROM `mokasong`.`users`
+        WHERE `user_id` = #{userId} AND `is_deleted` = 0
+    </select>
+
+    <select id="getUserByEmail" resultType="com.mokasong.user.entity.User">
+        SELECT *
+        FROM `mokasong`.`users`
+        WHERE `email` = #{email} AND `is_deleted` = 0
+    </select>
+
+    <select id="getUserByPhoneNumber" resultType="com.mokasong.user.entity.User">
+        SELECT *
+        FROM `mokasong`.`users`
+        WHERE `phone_number` = #{phoneNumber} AND `is_deleted` = 0
+    </select>
+
+    <select id="getUserByName" resultType="com.mokasong.user.entity.User">
+        SELECT *
+        FROM `mokasong`.`users`
+        WHERE `name` = #{name} AND `is_deleted` = 0
+    </select>
+
+    <select id="getUserByNameAndPhoneNumber" resultType="com.mokasong.user.entity.User">
+        SELECT *
+        FROM `mokasong`.`users`
+        WHERE `name` = #{name} AND `phone_number` = #{phoneNumber} AND `is_deleted` = 0
+    </select>
+
+    <select id="getUserByNameAndEmail" resultType="com.mokasong.user.entity.User">
+        SELECT *
+        FROM `mokasong`.`users`
+        WHERE `name` = #{name} AND `email` = #{email} AND `is_deleted` = 0
+    </select>
+
+    <select id="getUserByRegisterToken" resultType="com.mokasong.user.entity.User">
+        SELECT *
+        FROM `mokasong`.`users`
+        WHERE `register_token` = #{registerToken} AND `is_deleted` = 0
+    </select>
+
+    <select id="getUserBySecretKey" resultType="com.mokasong.user.entity.User">
+        SELECT *
+        FROM `mokasong`.`users`
+        WHERE `secret_key` = #{secretKey} AND `is_deleted` = 0
+    </select>
+
+    <select id="getUserIdByEmail" resultType="long">
+        SELECT `user_id`
+        FROM `mokasong`.`users`
+        WHERE `email` = #{email} AND `is_deleted` = 0
+    </select>
+
+    <update id="updateUser" parameterType="com.mokasong.user.entity.User">
+        UPDATE `mokasong`.`users`
+        SET
+            `email` = #{email},
+            `password` = #{password},
+            `phone_number` = #{phoneNumber},
+            `authority` = #{authority},
+            `name` = #{name},
+            `last_login_time` = #{lastLoginTime},
+            `last_logout_time` = #{lastLogoutTime},
+            `register_token` = #{registerToken},
+            `secret_key` = #{secretKey}
+        WHERE
+            `user_id` = #{userId}
+            AND `is_deleted` = 0
+    </update>
+</mapper>

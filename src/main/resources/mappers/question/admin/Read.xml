@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mokasong.question.repository.AdminQuestionMapper">
+    <!-- SQL -->
+    <select id="getQuestionForAdminPage" parameterType="long" resultMap="AdminPageQuestion">
+        SELECT *
+        FROM `mokasong`.`questions`
+        WHERE `question_id` = #{questionId}
+    </select>
+
+    <select id="getUser" parameterType="long" resultType="com.mokasong.question.dto.response.admin.QuestionResponse$Writer">
+        SELECT *
+        FROM `mokasong`.`users`
+        WHERE `user_id` = #{userId}
+    </select>
+
+    <select id="getQuestionAnswerByQuestionId" parameterType="long" resultType="com.mokasong.question.entity.QuestionAnswer">
+        SELECT *
+        FROM `mokasong`.`question_answers`
+        WHERE
+            `question_id` = #{questionId}
+            AND `is_deleted` = 0
+    </select>
+
+    <select id="getQuestion" parameterType="long" resultType="com.mokasong.question.entity.Question">
+        SELECT *
+        FROM `mokasong`.`questions`
+        WHERE question_id = #{questionId}
+    </select>
+
+    <!-- Result Map -->
+    <resultMap id="AdminPageQuestion" type="com.mokasong.question.dto.response.admin.QuestionResponse$AdminPageQuestion">
+        <id property="questionId" column="question_id"/>
+        <result property="title" column="title"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="content" column="content"/>
+        <result property="isDeleted" column="is_deleted"/>
+        <association property="writer" column="user_id" select="getUser"/>
+    </resultMap>
+</mapper>

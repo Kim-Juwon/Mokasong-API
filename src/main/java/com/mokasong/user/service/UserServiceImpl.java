@@ -4,14 +4,15 @@ import com.mokasong.common.exception.custom.*;
 import com.mokasong.common.dto.response.DuplicateCheckResponse;
 import com.mokasong.common.dto.response.SuccessfulResponse;
 import com.mokasong.common.util.*;
-import com.mokasong.user.domain.User;
+import com.mokasong.user.dto.response.admin.UserResponse;
+import com.mokasong.user.entity.User;
 import com.mokasong.user.dto.request.LoginRequest;
 import com.mokasong.user.dto.request.UserVerifyRequest;
 import com.mokasong.user.dto.request.RegisterRequest;
 import com.mokasong.user.dto.request.CodeCheckRequest;
-import com.mokasong.user.dto.response.EmailFindSuccessResponse;
-import com.mokasong.user.dto.response.LoginSuccessResponse;
-import com.mokasong.user.dto.response.VerificationCodeSendResponse;
+import com.mokasong.user.dto.response.normal.EmailFindSuccessResponse;
+import com.mokasong.user.dto.response.normal.LoginSuccessResponse;
+import com.mokasong.user.dto.response.normal.VerificationCodeSendResponse;
 import com.mokasong.user.repository.UserMapper;
 import com.mokasong.user.state.Authority;
 import com.mokasong.user.validation.UserDataValidationGroups.*;
@@ -64,6 +65,7 @@ public class UserServiceImpl implements UserService {
         userMapper.updateUser(user);
 
         return LoginSuccessResponse.builder()
+                .success(true)
                 .accessToken(jwtHandler.generateToken(user.getUserId(), user.getSecretKey(), 1))
                 .build();
     }
@@ -76,7 +78,9 @@ public class UserServiceImpl implements UserService {
         user.changeLastLogoutTimeToNow();
         userMapper.updateUser(user);
 
-        return new SuccessfulResponse();
+        return SuccessfulResponse.builder()
+                .success(true)
+                .build();
     }
 
     @Override
@@ -116,6 +120,7 @@ public class UserServiceImpl implements UserService {
         }
 
         return VerificationCodeSendResponse.builder()
+                .success(true)
                 .effectiveMinute(3)
                 .build();
     }
@@ -142,6 +147,7 @@ public class UserServiceImpl implements UserService {
         }
 
         return VerificationCodeSendResponse.builder()
+                .success(true)
                 .effectiveMinute(3)
                 .build();
     }
@@ -176,6 +182,7 @@ public class UserServiceImpl implements UserService {
         }
 
         return VerificationCodeSendResponse.builder()
+                .success(true)
                 .effectiveMinute(5)
                 .build();
     }
@@ -198,7 +205,9 @@ public class UserServiceImpl implements UserService {
 
         redisClient.deleteKey(REGISTER_CELLPHONE, requestBody.getPhoneNumber());
 
-        return new SuccessfulResponse();
+        return SuccessfulResponse.builder()
+                .success(true)
+                .build();
     }
 
     @Override
@@ -221,6 +230,7 @@ public class UserServiceImpl implements UserService {
         redisClient.deleteKey(FIND_EMAIL, requestBody.getPhoneNumber());
 
         return EmailFindSuccessResponse.builder()
+                .success(true)
                 .email(user.getEmail())
                 .build();
     }
@@ -247,7 +257,9 @@ public class UserServiceImpl implements UserService {
 
         redisClient.deleteKey(FIND_PASSWORD, requestBody.getPhoneNumber());
 
-        return new SuccessfulResponse();
+        return SuccessfulResponse.builder()
+                .success(true)
+                .build();
     }
 
     @Override
@@ -278,7 +290,9 @@ public class UserServiceImpl implements UserService {
         String htmlBody = new SpringTemplateEngine().process("register_verification", context);
         awsSes.sendEmail(requestBody.getEmail(), "[Mokasong] 회원가입을 위해 이메일을 인증해주세요.", htmlBody);
 
-        return new SuccessfulResponse();
+        return SuccessfulResponse.builder()
+                .success(true)
+                .build();
     }
 
     @Override
@@ -291,5 +305,17 @@ public class UserServiceImpl implements UserService {
         }
 
         userMapper.updateUser(user.changeToRegular());
+    }
+
+    @Override
+    @Transactional
+    public UserResponse getUserForAdmin(Long userId) throws Exception {
+        UserResponse user = userMapper.getUserByIgnoreDeletion(userId);
+
+        if (user == null) {
+            throw new NotFoundException("존재하지 않는 회원입니다.", 1);
+        }
+
+        return user;
     }
 }

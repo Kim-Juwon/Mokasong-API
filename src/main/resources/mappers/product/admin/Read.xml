@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mokasong.product.repository.AdminProductMapper">
+    <!-- SQL -->
+    <select id="getProductForAdminPage" parameterType="long" resultMap="AdminPageProduct">
+        SELECT *
+        FROM `mokasong`.`products`
+        WHERE `product_id` = #{productId}
+    </select>
+
+    <select id="getRootCategoryIdByDetailCategoryId" parameterType="long" resultType="long">
+        SELECT `product_root_category_id`
+        FROM `mokasong`.`product_detail_categories`
+        WHERE
+            `product_detail_category_id` = #{productDetailCategoryId}
+            AND `is_deleted` = 0
+    </select>
+
+    <select id="getProductImageUrlsByProductId" parameterType="long" resultType="string">
+        SELECT `url`
+        FROM `mokasong`.`product_images`
+        WHERE
+            `product_id` = #{productId}
+            AND `is_deleted` = 0
+    </select>
+
+    <select id="getProduct" parameterType="long" resultType="com.mokasong.product.entity.Product">
+        SELECT *
+        FROM `mokasong`.`products`
+        WHERE `product_id` = #{productId}
+    </select>
+
+    <!-- Result Map -->
+    <resultMap id="AdminPageProduct" type="com.mokasong.product.dto.response.admin.ProductResponse$AdminPageProduct">
+        <id property="productId" column="product_id"/>
+        <result property="name" column="name"/>
+        <result property="detailCategoryId" column="product_detail_category_id"/>
+        <result property="price" column="price"/>
+        <result property="discountedPrice" column="discounted_price" />
+        <result property="stock" column="stock"/>
+        <result property="isDeleted" column="is_deleted"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <association property="rootCategoryId" column="product_detail_category_id" select="getRootCategoryIdByDetailCategoryId"/>
+        <collection property="imageUrls" column="product_id" select="getProductImageUrlsByProductId"/>
+    </resultMap>
+</mapper>

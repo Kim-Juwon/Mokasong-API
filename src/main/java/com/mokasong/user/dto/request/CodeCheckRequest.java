@@ -1,7 +1,5 @@
 package com.mokasong.user.dto.request;
 
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.mokasong.user.validation.UserDataValidationGroups.*;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
@@ -12,7 +10,6 @@ import javax.validation.constraints.Size;
 import javax.validation.groups.Default;
 
 @Getter
-@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 @Schema(description = "인증번호 검증 DTO", required = true)
 public class CodeCheckRequest {
     @Schema(description = "휴대폰 번호", required = true, nullable = false, example = "01023911319")

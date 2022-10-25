@@ -3,7 +3,7 @@ package com.mokasong.common.interceptor;
 import com.mokasong.common.annotation.Login;
 import com.mokasong.common.exception.custom.ForbiddenException;
 import com.mokasong.common.exception.custom.UnauthorizedException;
-import com.mokasong.user.domain.User;
+import com.mokasong.user.entity.User;
 import com.mokasong.user.repository.UserMapper;
 import com.mokasong.common.util.JwtHandler;
 import com.mokasong.user.state.Authority;

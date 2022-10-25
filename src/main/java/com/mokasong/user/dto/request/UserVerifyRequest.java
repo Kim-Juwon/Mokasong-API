@@ -1,7 +1,5 @@
 package com.mokasong.user.dto.request;
 
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.mokasong.user.validation.UserDataValidationGroups.*;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
@@ -12,7 +10,6 @@ import javax.validation.constraints.Pattern;
 import javax.validation.groups.Default;
 
 @Getter
-@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class UserVerifyRequest {
     @Schema(description = "이름", required = true, nullable = false, example = "김주원")
     @NotBlank(groups = {FindEmail.class, FindPassword.class}, message = "이름은 필수입니다.")

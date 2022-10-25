@@ -1,6 +1,6 @@
 package com.mokasong.common.util;
 
-import com.mokasong.user.domain.User;
+import com.mokasong.user.entity.User;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 

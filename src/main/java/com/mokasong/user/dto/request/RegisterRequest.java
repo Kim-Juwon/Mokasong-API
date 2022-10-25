@@ -1,7 +1,5 @@
 package com.mokasong.user.dto.request;
 
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 
@@ -11,7 +9,6 @@ import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
 @Getter
-@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 @Schema(description = "회원가입 대기상태 전환 DTO", required = true)
 public class RegisterRequest {
     @Schema(description = "이메일", required = true, nullable = false, example = "damiano102777@naver.com")
