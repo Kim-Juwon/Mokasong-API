@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mokasong.user.repository.UserMapper">
+    <update id="updateUser" parameterType="com.mokasong.user.entity.User">
+        UPDATE `mokasong`.`users`
+        SET
+            `email` = #{email},
+            `password` = #{password},
+            `phone_number` = #{phoneNumber},
+            `authority` = #{authority},
+            `name` = #{name},
+            `last_login_time` = #{lastLoginTime},
+            `last_logout_time` = #{lastLogoutTime},
+            `register_token` = #{registerToken},
+            `secret_key` = #{secretKey}
+        WHERE
+            `user_id` = #{userId}
+          AND `is_deleted` = 0
+    </update>
+</mapper>

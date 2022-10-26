@@ -26,6 +26,7 @@ public interface UserService {
     SuccessfulResponse checkCodeFindPassword(@Valid CodeCheckRequest requestBody) throws Exception;
     SuccessfulResponse changeToStandingByRegister(RegisterRequest requestBody) throws Exception;
     void register(String registerToken) throws Exception;
-
     UserResponse getUserForAdmin(Long userId) throws Exception;
+    SuccessfulResponse deleteUserForAdmin(Long userId) throws Exception;
+    SuccessfulResponse undeleteUserForAdmin(Long userId) throws Exception;
 }

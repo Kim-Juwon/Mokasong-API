@@ -4,6 +4,7 @@ import com.mokasong.common.annotation.Login;
 import com.mokasong.common.exception.custom.ForbiddenException;
 import com.mokasong.common.exception.custom.UnauthorizedException;
 import com.mokasong.user.entity.User;
+import com.mokasong.user.repository.AdminUserMapper;
 import com.mokasong.user.repository.UserMapper;
 import com.mokasong.common.util.JwtHandler;
 import com.mokasong.user.state.Authority;
@@ -20,8 +21,8 @@ import static com.mokasong.user.state.Authority.*;
 
 @Component
 public class AuthorityCheckInterceptor implements HandlerInterceptor {
-    private UserMapper userMapper;
-    private JwtHandler jwtHandler;
+    private final UserMapper userMapper;
+    private final JwtHandler jwtHandler;
 
     @Autowired
     public AuthorityCheckInterceptor(UserMapper userMapper, JwtHandler jwtHandler) {
@@ -60,6 +61,7 @@ public class AuthorityCheckInterceptor implements HandlerInterceptor {
 
         accessToken = accessToken.substring(7, tokenLength);
         Long userId = jwtHandler.discoverUserId(accessToken);
+
         User user = userMapper.getUserById(userId);
 
         if (user == null) {

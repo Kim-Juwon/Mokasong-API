@@ -63,9 +63,8 @@ public class JwtHandler {
             JWT.require(algorithm).build().verify(accessToken);
         } catch (TokenExpiredException e) {
             throw new ForbiddenException("토큰 유효 시간이 만료되었습니다.", UNAUTHORIZED.getErrorCode());
-        }
-        catch (Exception e) {
-            throw new UnauthorizedException("토큰 변경이 감지되었습니다.", UNAUTHORIZED.getErrorCode());
+        } catch (Exception e) {
+            throw new UnauthorizedException("토큰 조작이 감지되었습니다.", UNAUTHORIZED.getErrorCode());
         }
     }
 

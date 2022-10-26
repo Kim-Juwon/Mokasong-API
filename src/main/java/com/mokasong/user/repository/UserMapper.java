@@ -1,6 +1,5 @@
 package com.mokasong.user.repository;
 
-import com.mokasong.user.dto.response.admin.UserResponse;
 import com.mokasong.user.entity.User;
 import org.apache.ibatis.annotations.Mapper;
 
@@ -14,5 +13,4 @@ public interface UserMapper {
     User getUserByNameAndEmail(String name, String email);
     User getUserByRegisterToken(String registerToken);
     void updateUser(User user);
-    UserResponse getUserByIgnoreDeletion(Long userId);
 }
