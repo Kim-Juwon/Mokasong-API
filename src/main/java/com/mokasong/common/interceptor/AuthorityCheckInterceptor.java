@@ -48,7 +48,7 @@ public class AuthorityCheckInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        String accessToken = request.getHeader("Authorization");
+        String accessToken = request.getHeader("Access-Token");
 
         if (accessToken == null) {
             throw new UnauthorizedException("헤더에 토큰이 없습니다.", UNAUTHORIZED.getErrorCode());

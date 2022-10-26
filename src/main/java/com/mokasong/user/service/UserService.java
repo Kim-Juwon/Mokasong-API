@@ -6,7 +6,6 @@ import com.mokasong.user.dto.request.LoginRequest;
 import com.mokasong.user.dto.request.RegisterRequest;
 import com.mokasong.user.dto.request.UserVerifyRequest;
 import com.mokasong.user.dto.request.CodeCheckRequest;
-import com.mokasong.user.dto.response.admin.UserResponse;
 import com.mokasong.user.dto.response.normal.EmailFindSuccessResponse;
 import com.mokasong.user.dto.response.normal.LoginSuccessResponse;
 import com.mokasong.user.dto.response.normal.VerificationCodeSendResponse;
@@ -26,7 +25,4 @@ public interface UserService {
     SuccessfulResponse checkCodeFindPassword(@Valid CodeCheckRequest requestBody) throws Exception;
     SuccessfulResponse changeToStandingByRegister(RegisterRequest requestBody) throws Exception;
     void register(String registerToken) throws Exception;
-    UserResponse getUserForAdmin(Long userId) throws Exception;
-    SuccessfulResponse deleteUserForAdmin(Long userId) throws Exception;
-    SuccessfulResponse undeleteUserForAdmin(Long userId) throws Exception;
 }

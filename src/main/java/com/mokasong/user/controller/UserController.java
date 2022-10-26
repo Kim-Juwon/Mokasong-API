@@ -32,7 +32,7 @@ import static com.mokasong.user.state.Authority.*;
 @RestController
 @RequestMapping("/user")
 @Validated
-@Tag(name = "User API", description = "유저 관련 API")
+@Tag(name = "User API", description = "회원 API - 일반")
 public class UserController {
     private final UserService userService;
 

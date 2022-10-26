@@ -28,7 +28,7 @@
     <select id="getQuestion" parameterType="long" resultType="com.mokasong.question.entity.Question">
         SELECT *
         FROM `mokasong`.`questions`
-        WHERE question_id = #{questionId}
+        WHERE `question_id` = #{questionId}
     </select>
 
     <!-- Result Map -->

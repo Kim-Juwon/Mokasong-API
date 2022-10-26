@@ -1,53 +1,37 @@
 package com.mokasong.product.controller;
 
 import com.mokasong.common.annotation.Login;
-import com.mokasong.common.dto.response.SuccessfulCreateResponse;
 import com.mokasong.common.dto.response.SuccessfulResponse;
-import com.mokasong.product.dto.request.CreateProductRequest;
 import com.mokasong.product.dto.response.admin.ProductResponse;
-import com.mokasong.product.service.ProductService;
-import org.hibernate.validator.messageinterpolation.AbstractMessageInterpolator;
+import com.mokasong.product.service.AdminProductService;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.Authorization;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
-import javax.validation.Valid;
-import java.net.URI;
-import java.util.List;
-
-import static com.mokasong.common.util.ControllerLayerUtils.getBaseUrl;
 import static com.mokasong.user.state.Authority.ADMIN;
 
 @RestController
 @RequestMapping("/admin/products")
+@Tag(name = "Admin Product API", description = "상품 API - 어드민")
 public class AdminProductController {
-    private final ProductService productService;
+    private final AdminProductService adminProductService;
 
-    @Value("${application.url.current}")
-    private String host;
+    @Value("${application.schema-and-host.current}")
+    private String schemeAndHost;
 
-    public AdminProductController(ProductService productService) {
-        this.productService = productService;
+    public AdminProductController(AdminProductService adminProductService) {
+        this.adminProductService = adminProductService;
     }
 
-    /*@Login(ADMIN)
-    @PostMapping("")
-    public ResponseEntity<SuccessfulCreateResponse> createProduct(
-            @RequestPart("product") @Valid CreateProductRequest requestBody,
-            @RequestPart(value = "images") List<MultipartFile> images) throws Exception {
-
-        SuccessfulCreateResponse response = productService.createProductForAdmin(requestBody, images);
-
-        return ResponseEntity
-                .created(URI.create(host + getBaseUrl(this.getClass()) + "/" + response.getEntityId()))
-                .body(response);
-    }*/
-
     @Login(ADMIN)
+    @Tag(name = "Admin Product API")
     @GetMapping("/{id}")
+    @ApiOperation(value = "상품 조회", notes = "상품 조회", authorizations = @Authorization("Access-Token"))
     public ResponseEntity<ProductResponse> getProduct(@PathVariable("id") Long productId) throws Exception {
-        ProductResponse responseBody = productService.getProductForAdmin(productId);
+        ProductResponse responseBody = adminProductService.getProduct(productId);
 
         return ResponseEntity
                 .ok()
@@ -55,9 +39,11 @@ public class AdminProductController {
     }
 
     @Login(ADMIN)
+    @Tag(name = "Admin Product API")
     @DeleteMapping("/{id}")
+    @ApiOperation(value = "상품 삭제", notes = "상품 soft delete", authorizations = @Authorization("Access-Token"))
     public ResponseEntity<SuccessfulResponse> deleteProduct(@PathVariable("id") Long productId) throws Exception {
-        SuccessfulResponse responseBody = productService.deleteProductForAdmin(productId);
+        SuccessfulResponse responseBody = adminProductService.deleteProduct(productId);
 
         return ResponseEntity
                 .ok()
@@ -65,9 +51,11 @@ public class AdminProductController {
     }
 
     @Login(ADMIN)
+    @Tag(name = "Admin Product API")
     @PatchMapping("/{id}/undelete")
+    @ApiOperation(value = "상품 삭제 해제", notes = "상품의 soft delete 해제", authorizations = @Authorization("Access-Token"))
     public ResponseEntity<SuccessfulResponse> undeleteProduct(@PathVariable("id") Long productId) throws Exception {
-        SuccessfulResponse responseBody = productService.undeleteProductForAdmin(productId);
+        SuccessfulResponse responseBody = adminProductService.undeleteProduct(productId);
 
         return ResponseEntity
                 .ok()
