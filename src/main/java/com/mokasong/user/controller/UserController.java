@@ -1,6 +1,6 @@
 package com.mokasong.user.controller;
 
-import com.mokasong.common.annotation.Login;
+import com.mokasong.common.annotation.Auth;
 import com.mokasong.common.exception.custom.UnprocessableEntityException;
 import com.mokasong.common.dto.response.SuccessfulResponse;
 import com.mokasong.common.exception.ErrorCode;
@@ -16,7 +16,6 @@ import com.mokasong.user.service.UserServiceImpl;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.Authorization;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -36,7 +35,6 @@ import static com.mokasong.user.state.Authority.*;
 public class UserController {
     private final UserService userService;
 
-    @Autowired
     public UserController(UserServiceImpl userService) {
         this.userService = userService;
     }
@@ -50,7 +48,7 @@ public class UserController {
                 .body(userService.login(requestBody));
     }
 
-    @Login({REGULAR, ADMIN})
+    @Auth({REGULAR, ADMIN})
     @Tag(name = "User API")
     @PostMapping("/logout")
     @ApiOperation(value = "로그아웃", notes = "로그아웃합니다.", authorizations = @Authorization(value = "Authorization"))

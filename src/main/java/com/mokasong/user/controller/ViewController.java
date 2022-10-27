@@ -2,7 +2,6 @@ package com.mokasong.user.controller;
 
 import com.mokasong.user.service.UserServiceImpl;
 import io.swagger.annotations.ApiOperation;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,7 +16,6 @@ import javax.validation.constraints.NotNull;
 public class ViewController {
     private final UserServiceImpl userService;
 
-    @Autowired
     public ViewController(UserServiceImpl userService) {
         this.userService = userService;
     }

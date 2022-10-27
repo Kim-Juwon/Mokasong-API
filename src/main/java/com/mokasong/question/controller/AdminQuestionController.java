@@ -1,6 +1,6 @@
 package com.mokasong.question.controller;
 
-import com.mokasong.common.annotation.Login;
+import com.mokasong.common.annotation.Auth;
 import com.mokasong.common.dto.response.SuccessfulResponse;
 import com.mokasong.question.dto.response.admin.QuestionResponse;
 import com.mokasong.question.service.AdminQuestionService;
@@ -16,6 +16,7 @@ import static com.mokasong.user.state.Authority.ADMIN;
 @RestController
 @RequestMapping("/admin/questions")
 @Tag(name = "Admin Question API", description = "문의 API - 어드민")
+@Auth(ADMIN)
 public class AdminQuestionController {
     private final AdminQuestionService adminQuestionService;
 
@@ -26,7 +27,6 @@ public class AdminQuestionController {
         this.adminQuestionService = adminQuestionService;
     }
 
-    @Login(ADMIN)
     @Tag(name = "Admin Question API")
     @GetMapping("/{id}")
     @ApiOperation(value = "문의 조회", notes = "문의 조회", authorizations = @Authorization("Access-Token"))
@@ -38,7 +38,6 @@ public class AdminQuestionController {
                 .body(responseBody);
     }
 
-    @Login(ADMIN)
     @Tag(name = "Admin Question API")
     @DeleteMapping("/{id}")
     @ApiOperation(value = "문의 삭제", notes = "문의 soft delete", authorizations = @Authorization("Access-Token"))
@@ -50,7 +49,6 @@ public class AdminQuestionController {
                 .body(responseBody);
     }
 
-    @Login(ADMIN)
     @Tag(name = "Admin Question API")
     @PatchMapping("{id}/undelete")
     @ApiOperation(value = "문의 삭제 해제", notes = "문의의 soft delete 해제", authorizations = @Authorization("Access-Token"))

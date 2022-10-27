@@ -1,10 +1,9 @@
 package com.mokasong.common.interceptor;
 
-import com.mokasong.common.annotation.Login;
+import com.mokasong.common.annotation.Auth;
 import com.mokasong.common.exception.custom.ForbiddenException;
 import com.mokasong.common.exception.custom.UnauthorizedException;
 import com.mokasong.user.entity.User;
-import com.mokasong.user.repository.AdminUserMapper;
 import com.mokasong.user.repository.UserMapper;
 import com.mokasong.common.util.JwtHandler;
 import com.mokasong.user.state.Authority;
@@ -17,7 +16,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import static com.mokasong.common.exception.ErrorCode.*;
-import static com.mokasong.user.state.Authority.*;
 
 @Component
 public class AuthorityCheckInterceptor implements HandlerInterceptor {
@@ -37,17 +35,49 @@ public class AuthorityCheckInterceptor implements HandlerInterceptor {
         }
         HandlerMethod handlerMethod = (HandlerMethod) handler;
 
-        Login login = handlerMethod.getMethod().getDeclaredAnnotation(Login.class);
+        Auth authInClass = handlerMethod.getMethod().getDeclaringClass().getDeclaredAnnotation(Auth.class);
+        Auth authInMethod = handlerMethod.getMethod().getDeclaredAnnotation(Auth.class);
 
-        if (login == null) {
-            return true;
+        User user;
+
+        if (authInClass == null) {
+            // 클래스, 메소드에 전부 선언 안되어있는 경우
+            if (authInMethod == null) {
+                return true;
+            }
+
+            // 메소드에만 선언되어있는 경우
+            user = getUser(request);
+
+            if (authorized(authInMethod, user.getAuthority())) {
+                request.setAttribute("user", user);
+                return true;
+            }
+        } else {
+            user = getUser(request);
+
+            // 클래스에만 선언되어 있는 경우
+            if (authInMethod == null) {
+                if (authorized(authInClass, user.getAuthority())) {
+                    request.setAttribute("user", user);
+                    return true;
+                }
+            }
+
+            // 클래스, 메소드에 전부 선언되어있는 경우
+            else {
+                // 메소드에 있는 정보를 기준으로 한다.
+                if (authorized(authInMethod, user.getAuthority())) {
+                    request.setAttribute("user", user);
+                    return true;
+                }
+            }
         }
 
-        Authority[] authorities = login.value();
-        if (authorities.length == 0) {
-            return true;
-        }
+        throw new ForbiddenException("권한이 없습니다.", -1);
+    }
 
+    private User getUser(HttpServletRequest request) throws Exception {
         String accessToken = request.getHeader("Access-Token");
 
         if (accessToken == null) {
@@ -70,17 +100,22 @@ public class AuthorityCheckInterceptor implements HandlerInterceptor {
 
         jwtHandler.validateToken(accessToken, user.getSecretKey());
 
-        if (user.getAuthority() == STAND_BY_REGISTER) {
-            throw new UnauthorizedException("아직 정식 회원이 아닙니다.", -1);
+        return user;
+    }
+
+    private boolean authorized(Auth auth, Authority userAuthority) throws Exception {
+        Authority[] authorities = auth.value();
+
+        if (authorities.length == 0) {
+            return true;
         }
 
         for (Authority authority : authorities) {
-            if (user.getAuthority().equals(authority)) {
-                request.setAttribute("user", user);
+            if (userAuthority == authority) {
                 return true;
             }
         }
 
-        throw new ForbiddenException("권한이 없습니다.", -1);
+        return false;
     }
 }

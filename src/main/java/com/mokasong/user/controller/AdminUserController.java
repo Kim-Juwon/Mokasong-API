@@ -1,6 +1,6 @@
 package com.mokasong.user.controller;
 
-import com.mokasong.common.annotation.Login;
+import com.mokasong.common.annotation.Auth;
 import com.mokasong.common.dto.response.SuccessfulResponse;
 import com.mokasong.user.dto.response.admin.UserResponse;
 import com.mokasong.user.service.AdminUserService;
@@ -16,6 +16,7 @@ import static com.mokasong.user.state.Authority.ADMIN;
 @RestController
 @RequestMapping("/admin/users")
 @Tag(name = "Admin User API", description = "회원 API - 어드민")
+@Auth(ADMIN)
 public class AdminUserController {
     private final AdminUserService adminUserService;
 
@@ -26,7 +27,6 @@ public class AdminUserController {
         this.adminUserService = adminUserService;
     }
 
-    @Login(ADMIN)
     @Tag(name = "Admin User API")
     @GetMapping("/{id}")
     @ApiOperation(value = "회원 조회", notes = "회원을 조회", authorizations = @Authorization("Access-Token"))
@@ -38,7 +38,6 @@ public class AdminUserController {
                 .body(responseBody);
     }
 
-    @Login(ADMIN)
     @Tag(name = "Admin User API")
     @DeleteMapping("/{id}")
     @ApiOperation(value = "회원 삭제", notes = "회원 soft delete", authorizations = @Authorization("Access-Token"))
@@ -50,7 +49,6 @@ public class AdminUserController {
                 .body(responseBody);
     }
 
-    @Login(ADMIN)
     @Tag(name = "Admin User API")
     @PatchMapping("/{id}/undelete")
     @ApiOperation(value = "회원 삭제 해제", notes = "회원의 soft delete 해제", authorizations = @Authorization("Access-Token"))
