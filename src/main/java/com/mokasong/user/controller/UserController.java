@@ -3,7 +3,6 @@ package com.mokasong.user.controller;
 import com.mokasong.common.annotation.Auth;
 import com.mokasong.common.exception.custom.UnprocessableEntityException;
 import com.mokasong.common.dto.response.SuccessfulResponse;
-import com.mokasong.common.exception.ErrorCode;
 import com.mokasong.user.dto.request.LoginRequest;
 import com.mokasong.user.dto.request.UserVerifyRequest;
 import com.mokasong.user.dto.request.RegisterRequest;
@@ -72,7 +71,7 @@ public class UserController {
             response = userService.getDuplicateStatusOfPhoneNumber(data);
         }
         else {
-            throw new UnprocessableEntityException("data가 유효하지 않습니다.", 0);
+            throw new UnprocessableEntityException("data가 유효하지 않습니다.", "data", data);
         }
 
         return ResponseEntity
@@ -98,7 +97,7 @@ public class UserController {
                 response = userService.sendCodeForFindPassword(requestBody);
                 break;
             default:
-                throw new UnprocessableEntityException("purpose가 유효하지 않습니다.", 0);
+                throw new UnprocessableEntityException("purpose가 유효하지 않습니다.", "purpose", requestBody.getPurpose());
         }
 
         return ResponseEntity
@@ -127,7 +126,7 @@ public class UserController {
                 response = userService.checkCodeFindPassword(requestBody);
                 break;
             default:
-                throw new UnprocessableEntityException("purpose가 유효하지 않습니다.", ErrorCode.UNPROCESSABLE_ENTITY.getErrorCode());
+                throw new UnprocessableEntityException("purpose가 유효하지 않습니다.", "purpose", requestBody.getPurpose());
         }
 
         return ResponseEntity

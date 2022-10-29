@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mokasong.product.repository.AdminCategoryMapper">
+    <!-- SQL -->
+    <select id="getRootCategory" parameterType="long" resultType="com.mokasong.product.entity.ProductRootCategory">
+        SELECT *
+        FROM `mokasong`.`product_root_categories`
+        WHERE `product_root_category_id` = #{rootCategoryId} AND `is_deleted` = 0
+    </select>
+
+    <select id="getRootCategoryByName" parameterType="string" resultType="com.mokasong.product.entity.ProductRootCategory">
+        SELECT *
+        FROM `mokasong`.`product_root_categories`
+        WHERE `name` = #{name} AND `is_deleted` = 0
+    </select>
+
+    <select id="getDetailCategoryByName" parameterType="string" resultType="com.mokasong.product.entity.ProductDetailCategory">
+        SELECT *
+        FROM `mokasong`.`product_detail_categories`
+        WHERE `name` = #{name} AND `is_deleted` = 0
+    </select>
+
+    <select id="getAllRootCategoriesForAdminPage" resultMap="AllRootCategories">
+        SELECT *
+        FROM `mokasong`.`product_root_categories`
+        WHERE `is_deleted` = 0
+    </select>
+
+    <select id="getDetailCategoriesByRootCategoryId" resultMap="DetailCategory">
+        SELECT *
+        FROM `mokasong`.`product_detail_categories`
+        WHERE `product_root_category_id` = #{rootCategoryId} AND `is_deleted` = 0
+    </select>
+
+    <select id="getDetailCategory" resultType="com.mokasong.product.entity.ProductDetailCategory">
+        SELECT *
+        FROM `mokasong`.`product_detail_categories`
+        WHERE `product_detail_category_id` = #{detailCategoryId} AND `is_deleted` = 0
+    </select>
+
+    <select id="getDetailCategoriesIncludedInRootCategory" resultType="com.mokasong.product.entity.ProductDetailCategory">
+        SELECT *
+        FROM `mokasong`.`product_detail_categories`
+        WHERE `product_root_category_id` = #{rootCategoryId} AND `is_deleted` = 0
+    </select>
+
+    <select id="getProductsIncludedInDetailCategory" resultType="com.mokasong.product.entity.Product">
+        SELECT *
+        FROM `mokasong`.`products`
+        WHERE `product_detail_category_id` = #{detailCategoryId} AND `is_deleted` = 0
+    </select>
+
+    <!-- Result Map -->
+    <resultMap id="AllRootCategories" type="com.mokasong.product.dto.response.admin.AllCategoriesResponse$RootCategory">
+        <id property="rootCategoryId" column="product_root_category_id"/>
+        <result property="name" column="name"/>
+        <collection property="detailCategories" column="product_root_category_id"
+                    select="getDetailCategoriesByRootCategoryId"/>
+    </resultMap>
+
+    <resultMap id="DetailCategory" type="com.mokasong.product.dto.response.admin.AllCategoriesResponse$DetailCategory">
+        <result property="detailCategoryId" column="product_detail_category_id"/>
+        <result property="rootCategoryId" column="product_root_category_id"/>
+        <result property="name" column="name"/>
+    </resultMap>
+</mapper>

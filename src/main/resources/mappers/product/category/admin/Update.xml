@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mokasong.product.repository.AdminCategoryMapper">
+    <!-- SQL -->
+    <update id="updateRootCategory" parameterType="com.mokasong.product.entity.ProductRootCategory">
+        UPDATE `mokasong`.`product_root_categories`
+        SET `name` = #{name}
+        WHERE `product_root_category_id` = #{rootCategoryId}
+    </update>
+
+    <update id="updateDetailCategory" parameterType="com.mokasong.product.entity.ProductDetailCategory">
+        UPDATE `mokasong`.`product_detail_categories`
+        SET
+            `name` = #{name},
+
+        WHERE `product_root_category_id` = #{rootCategoryId}
+    </update>
+</mapper>

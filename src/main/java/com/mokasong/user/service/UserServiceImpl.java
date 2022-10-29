@@ -118,7 +118,7 @@ public class UserServiceImpl implements UserService {
             System.out.println(code);
         }
         else {
-            throw new UnprocessableEntityException("way가 유효하지 않습니다.", 0);
+            throw new UnprocessableEntityException("way가 유효하지 않습니다.", "way", requestBody.getWay());
         }
 
         return VerificationCodeSendResponse.builder()
@@ -145,7 +145,7 @@ public class UserServiceImpl implements UserService {
                 System.out.println(code);
                 break;
             default:
-                throw new UnprocessableEntityException("way가 유효하지 않습니다.", 0);
+                throw new UnprocessableEntityException("way가 유효하지 않습니다.", "way", requestBody.getWay());
         }
 
         return VerificationCodeSendResponse.builder()
@@ -180,7 +180,7 @@ public class UserServiceImpl implements UserService {
                 System.out.println(code);
                 break;
             default:
-                throw new UnprocessableEntityException("way에 올바르지 않은 값이 들어있습니다.", 0);
+                throw new UnprocessableEntityException("way에 올바르지 않은 값이 들어있습니다.", "way", requestBody.getWay());
         }
 
         return VerificationCodeSendResponse.builder()
