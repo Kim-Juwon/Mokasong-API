@@ -8,7 +8,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
-    private AuthorityCheckInterceptor interceptor;
+    private final AuthorityCheckInterceptor interceptor;
 
     @Autowired
     public WebMvcConfig(AuthorityCheckInterceptor interceptor) {

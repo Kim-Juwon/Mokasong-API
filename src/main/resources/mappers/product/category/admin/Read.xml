@@ -23,18 +23,6 @@
         WHERE `name` = #{name} AND `is_deleted` = 0
     </select>
 
-    <select id="getAllRootCategoriesForAdminPage" resultMap="AllRootCategories">
-        SELECT *
-        FROM `mokasong`.`product_root_categories`
-        WHERE `is_deleted` = 0
-    </select>
-
-    <select id="getDetailCategoriesByRootCategoryId" resultMap="DetailCategory">
-        SELECT *
-        FROM `mokasong`.`product_detail_categories`
-        WHERE `product_root_category_id` = #{rootCategoryId} AND `is_deleted` = 0
-    </select>
-
     <select id="getDetailCategory" resultType="com.mokasong.product.entity.ProductDetailCategory">
         SELECT *
         FROM `mokasong`.`product_detail_categories`
@@ -50,20 +38,75 @@
     <select id="getProductsIncludedInDetailCategory" resultType="com.mokasong.product.entity.Product">
         SELECT *
         FROM `mokasong`.`products`
-        WHERE `product_detail_category_id` = #{detailCategoryId} AND `is_deleted` = 0
+        WHERE `product_detail_category_id` = #{detailCategoryId} <!-- soft delete된 product도 포함해서 조회한다. -->
+    </select>
+
+    <select id="getTotalCountOfRootCategories" resultType="long">
+        SELECT COUNT(*)
+        FROM `mokasong`.`product_root_categories`
+        WHERE `is_deleted` = 0
+    </select>
+
+    <select id="getTotalCountOfDetailCategories" resultType="long">
+        SELECT COUNT(*)
+        FROM `mokasong`.`product_detail_categories`
+        WHERE `is_deleted` = 0
+    </select>
+
+    <select id="getRootCategoriesByCondition" parameterType="com.mokasong.common.query.PageAndSearch"
+            resultType="com.mokasong.product.dto.response.admin.RootCategoriesResponse$RootCategory">
+        SELECT
+            `product_root_category_id` AS `rootCategoryId`,
+            `name`
+        FROM `mokasong`.`product_root_categories`
+        WHERE
+            `is_deleted` = 0
+            <if test="pageAndSearch.searchString != null">
+            AND REPLACE(`name`, ' ', '') LIKE CONCAT('%', REPLACE(#{pageAndSearch.searchString}, ' ', ''), '%')
+            </if>
+        LIMIT #{begin}, #{pageAndSearch.limit}
+    </select>
+
+    <select id="getDetailCategoriesByCondition" parameterType="com.mokasong.common.query.PageAndSearch"
+            resultType="com.mokasong.product.dto.response.admin.DetailCategoriesResponse$DetailCategory">
+        SELECT
+            `product_detail_category_id` AS `detailCategoryId`,
+            `product_root_category_id` AS `rootCategoryId`,
+            `name`
+        FROM `mokasong`.`product_detail_categories`
+        WHERE
+            `is_deleted` = 0
+            <if test="pageAndSearch.searchString != null">
+                AND REPLACE(`name`, ' ', '') LIKE CONCAT('%', REPLACE(#{pageAndSearch.searchString}, ' ', ''), '%')
+            </if>
+        LIMIT #{begin}, #{pageAndSearch.limit}
+    </select>
+
+    <select id="getAllCategories" resultMap="AllCategories">
+        SELECT
+            `root`.`product_root_category_id` AS `root.id`,
+            `root`.`name` AS `root.name`,
+            `detail`.`product_detail_category_id` AS `detail.id`,
+            `detail`.`product_root_category_id` AS `detail.rootId`,
+            `detail`.`name` AS `detail.name`
+        FROM `mokasong`.`product_root_categories` `root`
+            LEFT JOIN `mokasong`.`product_detail_categories` `detail`
+            ON `root`.`product_root_category_id` = `detail`.`product_root_category_id`
+        WHERE
+            `root`.`is_deleted` = 0
+            AND `detail`.`is_deleted` = 0
     </select>
 
     <!-- Result Map -->
-    <resultMap id="AllRootCategories" type="com.mokasong.product.dto.response.admin.AllCategoriesResponse$RootCategory">
-        <id property="rootCategoryId" column="product_root_category_id"/>
-        <result property="name" column="name"/>
-        <collection property="detailCategories" column="product_root_category_id"
-                    select="getDetailCategoriesByRootCategoryId"/>
+    <resultMap id="AllCategories" type="com.mokasong.product.dto.response.admin.AllCategoriesResponse$RootCategory">
+        <id property="rootCategoryId" column="root.id"/>
+        <result property="name" column="root.name"/>
+        <collection property="detailCategories" javaType="list" resultMap="DetailCategories"/>
     </resultMap>
 
-    <resultMap id="DetailCategory" type="com.mokasong.product.dto.response.admin.AllCategoriesResponse$DetailCategory">
-        <result property="detailCategoryId" column="product_detail_category_id"/>
-        <result property="rootCategoryId" column="product_root_category_id"/>
-        <result property="name" column="name"/>
+    <resultMap id="DetailCategories" type="com.mokasong.product.dto.response.admin.AllCategoriesResponse$DetailCategory">
+        <id property="detailCategoryId" column="detail.id"/>
+        <result property="rootCategoryId" column="detail.rootId"/>
+        <result property="name" column="detail.name"/>
     </resultMap>
 </mapper>

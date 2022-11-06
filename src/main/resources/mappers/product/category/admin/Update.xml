@@ -7,15 +7,16 @@
     <!-- SQL -->
     <update id="updateRootCategory" parameterType="com.mokasong.product.entity.ProductRootCategory">
         UPDATE `mokasong`.`product_root_categories`
-        SET `name` = #{name}
-        WHERE `product_root_category_id` = #{rootCategoryId}
+        SET `name` = #{rootCategory.name}
+        WHERE `product_root_category_id` = #{rootCategory.productRootCategoryId}
     </update>
 
     <update id="updateDetailCategory" parameterType="com.mokasong.product.entity.ProductDetailCategory">
         UPDATE `mokasong`.`product_detail_categories`
         SET
-            `name` = #{name},
-
-        WHERE `product_root_category_id` = #{rootCategoryId}
+            `name` = #{detailCategory.name},
+            `product_root_category_id` = #{detailCategory.productRootCategoryId}
+        WHERE
+            `product_detail_category_id` = #{detailCategory.productDetailCategoryId}
     </update>
 </mapper>

@@ -9,13 +9,12 @@
             useGeneratedKeys="true" keyProperty="productRootCategoryId">
         INSERT INTO `mokasong`.`product_root_categories`
         (`name`)
-        VALUES (#{name})
+        VALUES (#{category.name})
     </insert>
 
-    <insert id="createDetailCategory" parameterType="com.mokasong.product.entity.ProductDetailCategory"
-            useGeneratedKeys="true" keyProperty="productDetailCategoryId">
+    <insert id="createDetailCategory" parameterType="com.mokasong.product.entity.ProductDetailCategory" useGeneratedKeys="true" keyProperty="productDetailCategoryId">
         INSERT INTO `mokasong`.`product_detail_categories`
         (`product_root_category_id`, `name`)
-        VALUES (#{productRootCategoryId}, #{name})
+        VALUES (#{category.productRootCategoryId}, #{category.name})
     </insert>
 </mapper>

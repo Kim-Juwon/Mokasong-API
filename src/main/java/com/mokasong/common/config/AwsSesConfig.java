@@ -11,9 +11,9 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class AwsSesConfig {
-    @Value("${aws.access-key}")
+    @Value("${aws.ses.access-key}")
     private String accessKey;
-    @Value("${aws.secret-key}")
+    @Value("${aws.ses.secret-key}")
     private String secretKey;
 
     @Bean

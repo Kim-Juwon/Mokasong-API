@@ -15,11 +15,11 @@ public class ProductRootCategory {
     private Date updatedAt;
 
     public ProductRootCategory(String name) {
-        setName(name);
+        this.setName(name);
     }
 
     public ProductRootCategory update(String name) {
-        setName(name);
+        this.setName(name);
         return this;
     }
 

@@ -1,37 +1,30 @@
 package com.mokasong.product.dto.response.admin;
 
+import lombok.Builder;
 import lombok.Getter;
 
 import java.util.List;
 
-@Getter
+@Getter @Builder
 public class AllCategoriesResponse {
-    private AdminPageAllCategories categories;
+    private AllCategories categories;
 
-    @Getter
-    private final static class AdminPageAllCategories {
-        private final List<RootCategory> rootCategories;
-
-        public AdminPageAllCategories(List<RootCategory> rootCategories) {
-            this.rootCategories = rootCategories;
-        }
+    @Getter @Builder
+    public static class AllCategories {
+        private List<RootCategory> rootCategories;
     }
 
     @Getter
-    public final static class RootCategory {
+    public static class RootCategory {
         private Long rootCategoryId;
         private String name;
         private List<DetailCategory> detailCategories;
     }
 
     @Getter
-    private final static class DetailCategory {
+    private static class DetailCategory {
         private Long detailCategoryId;
         private Long rootCategoryId;
         private String name;
-    }
-
-    public AllCategoriesResponse(List<RootCategory> rootCategories) {
-        this.categories = new AdminPageAllCategories(rootCategories);
     }
 }

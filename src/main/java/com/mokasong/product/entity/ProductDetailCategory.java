@@ -1,5 +1,7 @@
 package com.mokasong.product.entity;
 
+import com.mokasong.product.dto.request.CreateDetailCategoryRequest;
+import com.mokasong.product.dto.request.UpdateDetailCategoryRequest;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -15,21 +17,27 @@ public class ProductDetailCategory {
     private Date createdAt;
     private Date updatedAt;
 
-    public ProductDetailCategory(Long rootCategoryId, String name) {
-        this.productRootCategoryId = rootCategoryId;
-        setName(name);
+    public ProductDetailCategory(CreateDetailCategoryRequest requestBody) {
+        this.productRootCategoryId = requestBody.getRootCategoryId();
+        this.setName(requestBody.getName());
     }
 
-    public boolean isIncludedIn(Long rootCategoryId) {
-        return productRootCategoryId.equals(rootCategoryId);
+    public ProductDetailCategory update(UpdateDetailCategoryRequest requestBody) {
+        this.productRootCategoryId = requestBody.getNewRootCategoryId();
+        this.name = requestBody.getName();
+        return this;
     }
 
-    public boolean isSame(String name) {
-        return this.name.equals(name);
+    public boolean isKindOf(Long rootCategoryId) {
+        return this.productRootCategoryId.equals(rootCategoryId);
     }
 
     public boolean isSame(Long productDetailCategoryId) {
         return this.productRootCategoryId.equals(productDetailCategoryId);
+    }
+
+    public boolean isSame(String name) {
+        return this.name.equals(name);
     }
 
     private void setName(String name) {
