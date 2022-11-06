@@ -72,7 +72,7 @@ public class AdminCategoryController {
     @Tag(name = "Admin Product Category API")
     @GetMapping("/detail")
     @ApiOperation(value = "상세 상품 카테고리 목록 조회 (페이지네이션)", notes = "페이지별 상세 상품 카테고리 목록 조회", authorizations = @Authorization("Access-Token"))
-    public ResponseEntity<DetailCategoriesResponse> getDetailCategories(PageAndSearch pageAndSearch) throws Exception {
+    public ResponseEntity<DetailCategoriesResponse> getDetailCategories(@Valid PageAndSearch pageAndSearch) throws Exception {
         DetailCategoriesResponse responseBody = adminCategoryService.getDetailCategories(pageAndSearch);
 
         return ResponseEntity

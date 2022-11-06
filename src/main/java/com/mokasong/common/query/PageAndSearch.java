@@ -8,12 +8,9 @@ import javax.validation.constraints.Positive;
 
 @Getter @Setter
 public class PageAndSearch {
-    @NotNull(message = "not null 이어야 합니다.")
-    @Positive(message = "1 이상이어야 합니다.")
+    @NotNull @Positive
     private Long page;
-
-    @NotNull(message = "not null 이어야 합니다.")
-    @Positive(message = "1 이상이어야 합니다.")
+    @NotNull @Positive
     private Long limit;
 
     private String searchString;

@@ -10,11 +10,8 @@ import javax.validation.constraints.Size;
 
 @Getter @Setter
 public class UpdateDetailCategoryRequest {
-    @NotBlank(message = "not blank 여야 합니다.")
-    @Size(max = 15, message = "최대 15자입니다.")
+    @NotBlank @Size(max = 15)
     private String name;
-
-    @NotNull(message = "not null 이어야 합니다.")
-    @Positive(message = "1 이상이어야 합니다.")
+    @NotNull @Positive
     private Long newRootCategoryId;
 }
