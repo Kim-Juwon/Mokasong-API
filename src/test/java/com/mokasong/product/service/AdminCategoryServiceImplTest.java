@@ -3,14 +3,12 @@ package com.mokasong.product.service;
 import com.mokasong.common.dto.response.SuccessfulCreateResponse;
 import com.mokasong.common.dto.response.SuccessfulResponse;
 import com.mokasong.common.exception.custom.ConflictException;
-import com.mokasong.common.exception.custom.InternalServerErrorException;
 import com.mokasong.common.exception.custom.NotFoundException;
-import com.mokasong.common.exception.custom.PreconditionFailedException;
 import com.mokasong.common.query.PageAndSearch;
-import com.mokasong.product.dto.request.CreateDetailCategoryRequest;
-import com.mokasong.product.dto.request.CreateRootCategoryRequest;
-import com.mokasong.product.dto.request.UpdateDetailCategoryRequest;
-import com.mokasong.product.dto.request.UpdateRootCategoryRequest;
+import com.mokasong.product.dto.request.admin.CreateDetailCategoryRequest;
+import com.mokasong.product.dto.request.admin.CreateRootCategoryRequest;
+import com.mokasong.product.dto.request.admin.UpdateDetailCategoryRequest;
+import com.mokasong.product.dto.request.admin.UpdateRootCategoryRequest;
 import com.mokasong.product.dto.response.admin.AllCategoriesResponse;
 import com.mokasong.product.dto.response.admin.DetailCategoriesResponse;
 import com.mokasong.product.dto.response.admin.RootCategoriesResponse;
@@ -35,26 +33,34 @@ class AdminCategoryServiceImplTest {
     AdminCategoryMapper adminCategoryMapper;
     AdminCategoryService service;
 
+    @BeforeEach
+    void init() {
+        service = new AdminCategoryServiceImpl(adminCategoryMapper);
+    }
+
     @Nested
-    class CreateRootCategory {
+    class createRootCategory {
         CreateRootCategoryRequest request = new CreateRootCategoryRequest();
 
         @Nested
-        @DisplayName("성공 케이스")
+        @DisplayName("성공")
         class Success {
 
             @Test
+            @DisplayName("성공 케이스")
             void test() throws Exception {
                 // given
                 request.setName("테스트 이름");
 
-                service = new AdminCategoryServiceImpl(adminCategoryMapper);
 
+                // stubbing
                 doReturn(null)
                         .when(adminCategoryMapper).getRootCategoryByName(request.getName());
 
+
                 // when
                 SuccessfulCreateResponse response = service.createRootCategory(request);
+
 
                 // then
                 assertTrue(response.getSuccess());
@@ -62,24 +68,27 @@ class AdminCategoryServiceImplTest {
         }
 
         @Nested
-        @DisplayName("실패 케이스")
+        @DisplayName("실패")
         class Fail {
 
             @Test
             @DisplayName("이름 중복")
-            void duplicateName() {
+            void duplicateName(@Mock ProductRootCategory rootCategory) {
                 // given
                 request.setName("테스트 이름");
 
-                service = new AdminCategoryServiceImpl(adminCategoryMapper);
 
-                doReturn(new ProductRootCategory())
+                // stubbing
+                doReturn(rootCategory)
                         .when(adminCategoryMapper).getRootCategoryByName(request.getName());
 
+
                 // when & then
-                assertThrows(ConflictException.class, () -> {
+                Exception exception = assertThrows(ConflictException.class, () -> {
                     service.createRootCategory(request);
                 });
+
+                assertEquals("이름이 중복되는 카테고리가 존재합니다.", exception.getMessage());
             }
         }
     }
@@ -89,24 +98,27 @@ class AdminCategoryServiceImplTest {
         CreateDetailCategoryRequest request = new CreateDetailCategoryRequest();
 
         @Nested
-        @DisplayName("성공 케이스")
+        @DisplayName("성공")
         class Success {
 
             @Test
-            void test() throws Exception {
+            @DisplayName("성공 케이스")
+            void test(@Mock ProductRootCategory rootCategory) throws Exception {
                 // given
                 request.setName("테스트 이름");
                 request.setRootCategoryId(1L);
 
-                service = new AdminCategoryServiceImpl(adminCategoryMapper);
 
-                doReturn(new ProductRootCategory())
+                // stubbing
+                doReturn(rootCategory)
                         .when(adminCategoryMapper).getRootCategory(request.getRootCategoryId());
                 doReturn(null)
-                        .when(adminCategoryMapper).getDetailCategoryByName(request.getName());
+                        .when(adminCategoryMapper).getDetailCategoryByRootCategoryIdAndName(request.getRootCategoryId(), request.getName());
+
 
                 // when
                 SuccessfulCreateResponse response = service.createDetailCategory(request);
+
 
                 // then
                 assertTrue(response.getSuccess());
@@ -114,74 +126,81 @@ class AdminCategoryServiceImplTest {
         }
 
         @Nested
-        @DisplayName("실패 케이스")
+        @DisplayName("실패")
         class Fail {
 
             @Test
-            @DisplayName("최상위 카테고리 미존재")
+            @DisplayName("최상위 카테고리 조회 안됨")
             void rootCategoryNotFound() {
                 // given
                 request.setName("테스트 이름");
                 request.setRootCategoryId(1L);
 
-                service = new AdminCategoryServiceImpl(adminCategoryMapper);
 
+                // stubbing
                 doReturn(null)
                         .when(adminCategoryMapper).getRootCategory(request.getRootCategoryId());
 
+
                 // when & then
-                assertThrows(InternalServerErrorException.class, () -> {
+                Exception exception = assertThrows(NotFoundException.class, () -> {
                     service.createDetailCategory(request);
                 });
+
+                assertEquals("최상위 카테고리가 존재하지 않습니다.", exception.getMessage());
             }
 
             @Test
             @DisplayName("이름 중복")
-            void duplicateName(@Mock ProductDetailCategory detailCategory) {
+            void duplicateName(@Mock ProductRootCategory rootCategory, @Mock ProductDetailCategory sameNameDetailCategory) {
                 // given
                 request.setName("테스트 이름");
                 request.setRootCategoryId(1L);
 
-                service = new AdminCategoryServiceImpl(adminCategoryMapper);
 
-                doReturn(new ProductRootCategory())
+                // stubbing
+                doReturn(rootCategory)
                         .when(adminCategoryMapper).getRootCategory(request.getRootCategoryId());
-                doReturn(true)
-                        .when(detailCategory).isKindOf(request.getRootCategoryId());
-                doReturn(detailCategory)
-                        .when(adminCategoryMapper).getDetailCategoryByName(request.getName());
+                doReturn(sameNameDetailCategory)
+                        .when(adminCategoryMapper).getDetailCategoryByRootCategoryIdAndName(request.getRootCategoryId(), request.getName());
+
 
                 // when & then
-                assertThrows(ConflictException.class, () -> {
+                Exception exception = assertThrows(ConflictException.class, () -> {
                     service.createDetailCategory(request);
                 });
+
+                assertEquals("같은 최상위 카테고리에 이름이 중복되는 상세 카테고리가 존재합니다.", exception.getMessage());
             }
         }
     }
 
     @Nested
     class getRootCategories {
-        PageAndSearch queryParameters = new PageAndSearch();
+        PageAndSearch pageAndSearch = new PageAndSearch();
 
         @Nested
-        @DisplayName("성공 케이스")
+        @DisplayName("성공")
         class Success {
 
             @Test
+            @DisplayName("성공 케이스")
             void test() throws Exception {
                 // given
-                queryParameters.setPage(1L);
-                queryParameters.setLimit(10L);
+                pageAndSearch.setPage(1L);
+                pageAndSearch.setLimit(10L);
 
-                service = new AdminCategoryServiceImpl(adminCategoryMapper);
 
-                doReturn(20L)
+                // stubbing
+                doReturn(48L)
                         .when(adminCategoryMapper).getTotalCountOfRootCategories();
                 doReturn(new ArrayList<RootCategoriesResponse.RootCategory>())
-                        .when(adminCategoryMapper).getRootCategoriesByCondition(queryParameters.generateBegin(), queryParameters);
+                        .when(adminCategoryMapper).getRootCategoriesByCondition(pageAndSearch.extractBegin(), pageAndSearch);
+
 
                 // when
-                RootCategoriesResponse response = service.getRootCategories(queryParameters);
+                RootCategoriesResponse response = service.getRootCategories(pageAndSearch);
+
 
                 // then
                 assertNotNull(response.getTotalCount());
@@ -192,52 +211,58 @@ class AdminCategoryServiceImplTest {
         }
 
         @Nested
-        @DisplayName("실패 케이스")
+        @DisplayName("실패")
         class Fail {
 
             @Test
             @DisplayName("유효하지 않은 페이지")
-            void pageInvalid() {
+            void invalidPage() {
                 // given
-                queryParameters.setPage(3L);
-                queryParameters.setLimit(10L);
+                pageAndSearch.setPage(6L);
+                pageAndSearch.setLimit(10L);
 
-                service = new AdminCategoryServiceImpl(adminCategoryMapper);
 
-                doReturn(10L)
+                // stubbing
+                doReturn(48L)
                         .when(adminCategoryMapper).getTotalCountOfRootCategories();
 
+
                 // when & then
-                assertThrows(NotFoundException.class, () -> {
-                    service.getRootCategories(queryParameters);
+                Exception exception = assertThrows(NotFoundException.class, () -> {
+                    service.getRootCategories(pageAndSearch);
                 });
+
+                assertEquals("유효하지 않은 페이지입니다.", exception.getMessage());
             }
         }
     }
 
     @Nested
     class getDetailCategories {
-        PageAndSearch queryParameters = new PageAndSearch();
+        PageAndSearch pageAndSearch = new PageAndSearch();
 
         @Nested
-        @DisplayName("성공 케이스")
+        @DisplayName("성공")
         class Success {
 
             @Test
+            @DisplayName("성공 케이스")
             void test() throws Exception {
                 // given
-                queryParameters.setPage(1L);
-                queryParameters.setLimit(10L);
+                pageAndSearch.setPage(1L);
+                pageAndSearch.setLimit(10L);
 
-                service = new AdminCategoryServiceImpl(adminCategoryMapper);
 
-                doReturn(20L)
+                // stubbing
+                doReturn(48L)
                         .when(adminCategoryMapper).getTotalCountOfDetailCategories();
                 doReturn(new ArrayList<DetailCategoriesResponse.DetailCategory>())
-                        .when(adminCategoryMapper).getDetailCategoriesByCondition(queryParameters.generateBegin(), queryParameters);
+                        .when(adminCategoryMapper).getDetailCategoriesByCondition(pageAndSearch.extractBegin(), pageAndSearch);
+
 
                 // when
-                DetailCategoriesResponse response = service.getDetailCategories(queryParameters);
+                DetailCategoriesResponse response = service.getDetailCategories(pageAndSearch);
+
 
                 // then
                 assertNotNull(response.getTotalCount());
@@ -248,25 +273,28 @@ class AdminCategoryServiceImplTest {
         }
 
         @Nested
-        @DisplayName("실패 케이스")
+        @DisplayName("실패")
         class Fail {
 
             @Test
             @DisplayName("유효하지 않은 페이지")
-            void pageInvalid() {
+            void invalidPage() {
                 // given
-                queryParameters.setPage(3L);
-                queryParameters.setLimit(10L);
+                pageAndSearch.setPage(6L);
+                pageAndSearch.setLimit(10L);
 
-                service = new AdminCategoryServiceImpl(adminCategoryMapper);
 
-                doReturn(10L)
+                // stubbing
+                doReturn(48L)
                         .when(adminCategoryMapper).getTotalCountOfDetailCategories();
 
+
                 // when & then
-                assertThrows(NotFoundException.class, () -> {
-                    service.getDetailCategories(queryParameters);
+                Exception exception = assertThrows(NotFoundException.class, () -> {
+                    service.getDetailCategories(pageAndSearch);
                 });
+
+                assertEquals("유효하지 않은 페이지입니다.", exception.getMessage());
             }
         }
     }
@@ -275,19 +303,20 @@ class AdminCategoryServiceImplTest {
     class getAllCategories {
 
         @Nested
-        @DisplayName("성공 케이스")
+        @DisplayName("성공")
         class Success {
 
             @Test
+            @DisplayName("성공 케이스")
             void test() throws Exception {
-                // given
-                service = new AdminCategoryServiceImpl(adminCategoryMapper);
-
+                // stubbing
                 doReturn(new ArrayList<AllCategoriesResponse.RootCategory>())
                         .when(adminCategoryMapper).getAllCategories();
 
+
                 // when
                 AllCategoriesResponse response = service.getAllCategories();
+
 
                 // then
                 assertNotNull(response.getCategories());
@@ -297,30 +326,33 @@ class AdminCategoryServiceImplTest {
 
     @Nested
     class updateRootCategory {
-        UpdateRootCategoryRequest request = new UpdateRootCategoryRequest();
         Long rootCategoryId;
+        UpdateRootCategoryRequest request = new UpdateRootCategoryRequest();
 
         @Nested
-        @DisplayName("성공 케이스")
+        @DisplayName("성공")
         class Success {
 
             @Test
+            @DisplayName("성공 케이스")
             void test(@Mock ProductRootCategory rootCategory) throws Exception {
                 // given
-                request.setName("테스트 이름");
                 rootCategoryId = 1L;
+                request.setName("테스트 수정 이름");
 
-                service = new AdminCategoryServiceImpl(adminCategoryMapper);
 
-                doReturn(false)
-                        .when(rootCategory).isSame(request.getName());
+                // stubbing
                 doReturn(rootCategory)
                         .when(adminCategoryMapper).getRootCategory(rootCategoryId);
+                doReturn(false)
+                        .when(rootCategory).same(request.getName());
                 doReturn(null)
                         .when(adminCategoryMapper).getRootCategoryByName(request.getName());
 
+
                 // when
                 SuccessfulResponse response = service.updateRootCategory(rootCategoryId, request);
+
 
                 // then
                 assertTrue(response.getSuccess());
@@ -328,25 +360,28 @@ class AdminCategoryServiceImplTest {
         }
 
         @Nested
-        @DisplayName("실패 케이스")
+        @DisplayName("실패")
         class Fail {
 
             @Test
-            @DisplayName("카테고리 미존재")
-            void notFound() throws Exception {
+            @DisplayName("조회 안됨")
+            void rootCategoryNotFound() throws Exception {
                 // given
-                request.setName("테스트 이름");
+                request.setName("테스트 수정 이름");
                 rootCategoryId = 1L;
 
-                service = new AdminCategoryServiceImpl(adminCategoryMapper);
 
+                // stubbing
                 doReturn(null)
                         .when(adminCategoryMapper).getRootCategory(rootCategoryId);
 
+
                 // when & then
-                assertThrows(NotFoundException.class, () -> {
+                Exception exception = assertThrows(NotFoundException.class, () -> {
                     service.updateRootCategory(rootCategoryId, request);
                 });
+
+                assertEquals("최상위 카테고리가 존재하지 않습니다.", exception.getMessage());
             }
 
             @Test
@@ -356,78 +391,89 @@ class AdminCategoryServiceImplTest {
                 request.setName("테스트 이름");
                 rootCategoryId = 1L;
 
-                service = new AdminCategoryServiceImpl(adminCategoryMapper);
 
-                doReturn(true)
-                        .when(rootCategory).isSame(request.getName());
+                // stubbing
                 doReturn(rootCategory)
                         .when(adminCategoryMapper).getRootCategory(rootCategoryId);
+                doReturn(true)
+                        .when(rootCategory).same(request.getName());
+
 
                 // when & then
-                assertThrows(ConflictException.class, () -> {
+                Exception exception = assertThrows(ConflictException.class, () -> {
                     service.updateRootCategory(rootCategoryId, request);
                 });
+
+                assertEquals("이미 해당 이름으로 설정되어 있습니다.", exception.getMessage());
             }
 
             @Test
             @DisplayName("이름 중복")
-            void duplicateName(@Mock ProductRootCategory existingCategory,
-                               @Mock ProductRootCategory sameNameCategory) throws Exception {
+            void duplicateName(@Mock ProductRootCategory rootCategory, @Mock ProductRootCategory sameNameRootCategory) throws Exception {
                 // given
-                request.setName("테스트 이름");
+                request.setName("테스트 수정 이름");
                 rootCategoryId = 1L;
 
-                service = new AdminCategoryServiceImpl(adminCategoryMapper);
 
-                doReturn(false)
-                        .when(existingCategory).isSame(request.getName());
-                doReturn(existingCategory)
+                // stubbing
+                doReturn(rootCategory)
                         .when(adminCategoryMapper).getRootCategory(rootCategoryId);
                 doReturn(false)
-                        .when(sameNameCategory).isSame(rootCategoryId);
-                doReturn(sameNameCategory)
+                        .when(rootCategory).same(request.getName());
+                doReturn(sameNameRootCategory)
                         .when(adminCategoryMapper).getRootCategoryByName(request.getName());
+                doReturn(false)
+                        .when(sameNameRootCategory).sameEntity(rootCategory);
+
 
                 // when & then
-                assertThrows(ConflictException.class, () -> {
+                Exception exception = assertThrows(ConflictException.class, () -> {
                     service.updateRootCategory(rootCategoryId, request);
                 });
+
+                assertEquals("이름이 중복되는 카테고리가 존재합니다.", exception.getMessage());
             }
         }
     }
 
     @Nested
     class updateDetailCategory {
-        UpdateDetailCategoryRequest request = new UpdateDetailCategoryRequest();
         Long rootCategoryId, detailCategoryId;
+        UpdateDetailCategoryRequest request = new UpdateDetailCategoryRequest();
 
         @Nested
-        @DisplayName("성공 케이스")
+        @DisplayName("성공")
         class Success {
 
             @Test
-            void test(@Mock ProductDetailCategory detailCategory) throws Exception {
+            @DisplayName("성공 케이스")
+            void test(@Mock ProductRootCategory rootCategory, @Mock ProductDetailCategory detailCategory,
+                      @Mock ProductRootCategory newRootCategory) throws Exception {
                 // given
-                request.setName("테스트 이름");
-                request.setNewRootCategoryId(2L);
                 rootCategoryId = 1L;
                 detailCategoryId = 1L;
+                request.setName("테스트 수정 이름");
+                request.setNewRootCategoryId(2L);
 
-                service = new AdminCategoryServiceImpl(adminCategoryMapper);
 
-                doReturn(new ProductRootCategory())
+                // stubbing
+                doReturn(rootCategory)
                         .when(adminCategoryMapper).getRootCategory(rootCategoryId);
-                doReturn(true)
-                        .when(detailCategory).isKindOf(rootCategoryId);
-                doReturn(false)
-                        .when(detailCategory).isSame(request.getName());
                 doReturn(detailCategory)
                         .when(adminCategoryMapper).getDetailCategory(detailCategoryId);
+                doReturn(true)
+                        .when(detailCategory).same(rootCategoryId);
+                doReturn(false)
+                        .when(detailCategory).same(request.getName());
+                doReturn(newRootCategory)
+                        .when(adminCategoryMapper).getRootCategory(request.getNewRootCategoryId());
                 doReturn(null)
-                        .when(adminCategoryMapper).getDetailCategoryByName(request.getName());
+                        .when(adminCategoryMapper).getDetailCategoryByRootCategoryIdAndName(request.getNewRootCategoryId(), request.getName());
+
 
                 // when
                 SuccessfulResponse response = service.updateDetailCategory(rootCategoryId, detailCategoryId, request);
+
 
                 // then
                 assertTrue(response.getSuccess());
@@ -435,136 +481,178 @@ class AdminCategoryServiceImplTest {
         }
 
         @Nested
-        @DisplayName("실패 케이스")
+        @DisplayName("실패")
         class Fail {
 
             @Test
-            @DisplayName("최상위 카테고리 미존재")
-            void RootCategoryNotFound() throws Exception {
+            @DisplayName("최상위 카테고리 조회 안됨")
+            void rootCategoryNotFound() throws Exception {
                 // given
-                request.setName("테스트 이름");
-                request.setNewRootCategoryId(2L);
                 rootCategoryId = 1L;
                 detailCategoryId = 1L;
+                request.setName("테스트 수정 이름");
+                request.setNewRootCategoryId(2L);
 
-                service = new AdminCategoryServiceImpl(adminCategoryMapper);
 
+                // stubbing
                 doReturn(null)
                         .when(adminCategoryMapper).getRootCategory(rootCategoryId);
 
+
                 // when & then
-                assertThrows(NotFoundException.class, () -> {
+                Exception exception = assertThrows(NotFoundException.class, () -> {
                     service.updateDetailCategory(rootCategoryId, detailCategoryId, request);
                 });
+
+                assertEquals("최상위 카테고리가 존재하지 않습니다.", exception.getMessage());
             }
 
             @Test
-            @DisplayName("상세 카테고리 미존재")
-            void detailCategoryNotFound() throws Exception {
+            @DisplayName("상세 카테고리 조회 안됨")
+            void detailCategoryNotFound(@Mock ProductRootCategory rootCategory) throws Exception {
                 // given
-                request.setName("테스트 이름");
-                request.setNewRootCategoryId(2L);
                 rootCategoryId = 1L;
                 detailCategoryId = 1L;
+                request.setName("테스트 수정 이름");
+                request.setNewRootCategoryId(2L);
 
-                service = new AdminCategoryServiceImpl(adminCategoryMapper);
 
-                doReturn(new ProductRootCategory())
+                // stubbing
+                doReturn(rootCategory)
                         .when(adminCategoryMapper).getRootCategory(rootCategoryId);
                 doReturn(null)
                         .when(adminCategoryMapper).getDetailCategory(detailCategoryId);
 
+
                 // when & then
-                assertThrows(NotFoundException.class, () -> {
+                Exception exception = assertThrows(NotFoundException.class, () -> {
                     service.updateDetailCategory(rootCategoryId, detailCategoryId, request);
                 });
+
+                assertEquals("상세 카테고리가 존재하지 않습니다.", exception.getMessage());
             }
 
             @Test
-            @DisplayName("최상위 카테고리 소속이 아님")
-            void detailNotKindOfRoot(@Mock ProductDetailCategory detailCategory) throws Exception {
+            @DisplayName("상세 카테고리가 최상위 카테고리 종류가 아님")
+            void detailNotKindOfRoot(@Mock ProductRootCategory rootCategory, @Mock ProductDetailCategory detailCategory) throws Exception {
                 // given
-                request.setName("테스트 이름");
-                request.setNewRootCategoryId(2L);
                 rootCategoryId = 1L;
                 detailCategoryId = 1L;
+                request.setName("테스트 수정 이름");
+                request.setNewRootCategoryId(2L);
 
-                service = new AdminCategoryServiceImpl(adminCategoryMapper);
 
-                doReturn(new ProductRootCategory())
+                // stubbing
+                doReturn(rootCategory)
                         .when(adminCategoryMapper).getRootCategory(rootCategoryId);
+                doReturn(detailCategory)
+                        .when(adminCategoryMapper).getDetailCategory(detailCategoryId);
                 doReturn(false)
-                        .when(detailCategory).isKindOf(rootCategoryId);
-                doReturn(detailCategory)
-                        .when(adminCategoryMapper).getDetailCategory(detailCategoryId);
+                        .when(detailCategory).same(rootCategoryId);
+
 
                 // when & then
-                assertThrows(PreconditionFailedException.class, () -> {
+                Exception exception = assertThrows(ConflictException.class, () -> {
                     service.updateDetailCategory(rootCategoryId, detailCategoryId, request);
                 });
+
+                assertEquals("상세 카테고리가 최상위 카테고리의 종류가 아닙니다.", exception.getMessage());
             }
 
             @Test
-            @DisplayName("최상위 카테고리 소속이 아님")
-            void sameAsBefore(@Mock ProductDetailCategory detailCategory) throws Exception {
+            @DisplayName("수정된 내용 없음")
+            void sameAsBefore(@Mock ProductRootCategory rootCategory, @Mock ProductDetailCategory detailCategory) throws Exception {
+                // given
+                rootCategoryId = 1L;
+                detailCategoryId = 1L;
+                request.setName("테스트 이름");
+                request.setNewRootCategoryId(1L);
+
+
+                // stubbing
+                doReturn(rootCategory)
+                        .when(adminCategoryMapper).getRootCategory(rootCategoryId);
+                doReturn(detailCategory)
+                        .when(adminCategoryMapper).getDetailCategory(detailCategoryId);
+                doReturn(true)
+                        .when(detailCategory).same(rootCategoryId);
+                doReturn(true)
+                        .when(detailCategory).same(request.getName());
+
+
+                // when & then
+                Exception exception = assertThrows(ConflictException.class, () -> {
+                    service.updateDetailCategory(rootCategoryId, detailCategoryId, request);
+                });
+
+                assertEquals("수정된 내용이 없습니다.", exception.getMessage());
+            }
+
+            @Test
+            @DisplayName("새 최상위 카테고리가 조회 안됨")
+            void newRootCategoryNotFound(@Mock ProductRootCategory rootCategory, @Mock ProductDetailCategory detailCategory) throws Exception {
                 // given
                 request.setName("테스트 이름");
                 request.setNewRootCategoryId(2L);
                 rootCategoryId = 1L;
                 detailCategoryId = 1L;
 
-                service = new AdminCategoryServiceImpl(adminCategoryMapper);
 
-                doReturn(new ProductRootCategory())
+                // stubbing
+                doReturn(rootCategory)
                         .when(adminCategoryMapper).getRootCategory(rootCategoryId);
-                doReturn(true)
-                        .when(detailCategory).isKindOf(rootCategoryId);
-                doReturn(true)
-                        .when(detailCategory).isSame(request.getName());
-                doReturn(true)
-                        .when(detailCategory).isKindOf(request.getNewRootCategoryId());
                 doReturn(detailCategory)
                         .when(adminCategoryMapper).getDetailCategory(detailCategoryId);
+                doReturn(true)
+                        .when(detailCategory).same(rootCategoryId);
+                doReturn(false)
+                        .when(detailCategory).same(request.getName());
+                doReturn(null)
+                        .when(adminCategoryMapper).getRootCategory(request.getNewRootCategoryId());
+
 
                 // when & then
-                assertThrows(ConflictException.class, () -> {
+                Exception exception = assertThrows(NotFoundException.class, () -> {
                     service.updateDetailCategory(rootCategoryId, detailCategoryId, request);
                 });
+
+                assertEquals("새로 요청한 최상위 카테고리가 존재하지 않습니다.", exception.getMessage());
             }
 
             @Test
             @DisplayName("이름 중복")
-            void sameAsBefore(@Mock ProductDetailCategory existingDetailCategory,
-                              @Mock ProductDetailCategory sameNameDetailCategory) throws Exception {
+            void sameNameAsBefore(@Mock ProductRootCategory rootCategory, @Mock ProductRootCategory newRootCategory,
+                                  @Mock ProductDetailCategory detailCategory, @Mock ProductDetailCategory sameNameDetailCategory) throws Exception {
                 // given
                 request.setName("테스트 이름");
                 request.setNewRootCategoryId(2L);
                 rootCategoryId = 1L;
                 detailCategoryId = 1L;
 
-                service = new AdminCategoryServiceImpl(adminCategoryMapper);
 
-                doReturn(new ProductRootCategory())
+                // stubbing
+                doReturn(rootCategory)
                         .when(adminCategoryMapper).getRootCategory(rootCategoryId);
-
-                doReturn(true)
-                        .when(existingDetailCategory).isKindOf(rootCategoryId);
-                doReturn(false)
-                        .when(existingDetailCategory).isSame(request.getName());
-                doReturn(existingDetailCategory)
+                doReturn(detailCategory)
                         .when(adminCategoryMapper).getDetailCategory(detailCategoryId);
-
-                doReturn(false)
-                        .when(sameNameDetailCategory).isSame(detailCategoryId);
                 doReturn(true)
-                        .when(sameNameDetailCategory).isKindOf(rootCategoryId);
+                        .when(detailCategory).same(rootCategoryId);
+                doReturn(false)
+                        .when(detailCategory).same(request.getName());
+                doReturn(newRootCategory)
+                        .when(adminCategoryMapper).getRootCategory(request.getNewRootCategoryId());
                 doReturn(sameNameDetailCategory)
-                        .when(adminCategoryMapper).getDetailCategoryByName(request.getName());
+                        .when(adminCategoryMapper).getDetailCategoryByRootCategoryIdAndName(request.getNewRootCategoryId(), request.getName());
+                doReturn(false)
+                        .when(sameNameDetailCategory).sameEntity(detailCategory);
+
 
                 // when & then
-                assertThrows(ConflictException.class, () -> {
+                Exception exception = assertThrows(ConflictException.class, () -> {
                     service.updateDetailCategory(rootCategoryId, detailCategoryId, request);
                 });
+
+                assertEquals("같은 최상위 카테고리에 이름이 중복되는 상세 카테고리가 존재합니다.", exception.getMessage());
             }
         }
     }
@@ -574,23 +662,26 @@ class AdminCategoryServiceImplTest {
         Long rootCategoryId;
 
         @Nested
-        @DisplayName("성공 케이스")
+        @DisplayName("성공")
         class Success {
 
             @Test
-            void test() throws Exception {
+            @DisplayName("성공 케이스")
+            void test(@Mock ProductRootCategory rootCategory) throws Exception {
                 // given
                 rootCategoryId = 1L;
 
-                service = new AdminCategoryServiceImpl(adminCategoryMapper);
 
-                doReturn(new ProductRootCategory())
+                // stubbing
+                doReturn(rootCategory)
                         .when(adminCategoryMapper).getRootCategory(rootCategoryId);
                 doReturn(new ArrayList<ProductDetailCategory>())
                         .when(adminCategoryMapper).getDetailCategoriesIncludedInRootCategory(rootCategoryId);
 
+
                 // when
                 SuccessfulResponse response = service.deleteRootCategory(rootCategoryId);
+
 
                 // then
                 assertTrue(response.getSuccess());
@@ -598,45 +689,53 @@ class AdminCategoryServiceImplTest {
         }
 
         @Nested
-        @DisplayName("실패 케이스")
+        @DisplayName("실패")
         class Fail {
 
             @Test
-            @DisplayName("미존재")
+            @DisplayName("최상위 카테고리 조회 안됨")
             void notFound() {
                 // given
                 rootCategoryId = 1L;
 
-                service = new AdminCategoryServiceImpl(adminCategoryMapper);
 
-                doReturn(null).when(adminCategoryMapper).getRootCategory(rootCategoryId);
+                // stubbing
+                doReturn(null)
+                        .when(adminCategoryMapper).getRootCategory(rootCategoryId);
+
 
                 // when & then
-                assertThrows(NotFoundException.class, () -> {
+                Exception exception = assertThrows(NotFoundException.class, () -> {
                     service.deleteRootCategory(rootCategoryId);
                 });
+
+                assertEquals("최상위 카테고리가 존재하지 않습니다.", exception.getMessage());
             }
 
             @Test
             @DisplayName("사용하는 상세 카테고리가 존재")
-            void detailUsingRootExist() {
+            void detailCategoryExist(@Mock ProductRootCategory rootCategory) {
                 // given
                 rootCategoryId = 1L;
 
-                service = new AdminCategoryServiceImpl(adminCategoryMapper);
+
+                // stubbing
+                doReturn(rootCategory)
+                        .when(adminCategoryMapper).getRootCategory(rootCategoryId);
 
                 List<ProductDetailCategory> detailCategories = new ArrayList<>();
                 detailCategories.add(new ProductDetailCategory());
 
-                doReturn(new ProductRootCategory())
-                        .when(adminCategoryMapper).getRootCategory(rootCategoryId);
                 doReturn(detailCategories)
                         .when(adminCategoryMapper).getDetailCategoriesIncludedInRootCategory(rootCategoryId);
 
+
                 // when & then
-                assertThrows(PreconditionFailedException.class, () -> {
+                Exception exception = assertThrows(ConflictException.class, () -> {
                     service.deleteRootCategory(rootCategoryId);
                 });
+
+                assertEquals("해당 최상위 카테고리를 사용하는 상세 카테고리가 존재하기 때문에 삭제할 수 없습니다.", exception.getMessage());
             }
         }
     }
@@ -646,28 +745,31 @@ class AdminCategoryServiceImplTest {
         Long rootCategoryId, detailCategoryId;
 
         @Nested
-        @DisplayName("성공 케이스")
+        @DisplayName("성공")
         class Success {
 
             @Test
-            void test(@Mock ProductDetailCategory detailCategory) throws Exception {
+            @DisplayName("성공 케이스")
+            void test(@Mock ProductRootCategory rootCategory, @Mock ProductDetailCategory detailCategory) throws Exception {
                 // given
                 rootCategoryId = 1L;
                 detailCategoryId = 1L;
 
-                service = new AdminCategoryServiceImpl(adminCategoryMapper);
 
-                doReturn(new ProductRootCategory())
+                // stubbing
+                doReturn(rootCategory)
                         .when(adminCategoryMapper).getRootCategory(rootCategoryId);
-                doReturn(true)
-                        .when(detailCategory).isKindOf(rootCategoryId);
                 doReturn(detailCategory)
                         .when(adminCategoryMapper).getDetailCategory(detailCategoryId);
+                doReturn(true)
+                        .when(detailCategory).same(rootCategoryId);
                 doReturn(new ArrayList<Product>())
                         .when(adminCategoryMapper).getProductsIncludedInDetailCategory(detailCategoryId);
 
+
                 // when
                 SuccessfulResponse response = service.deleteDetailCategory(rootCategoryId, detailCategoryId);
+
 
                 // then
                 assertTrue(response.getSuccess());
@@ -676,84 +778,93 @@ class AdminCategoryServiceImplTest {
 
 
         @Nested
-        @DisplayName("실패 케이스")
+        @DisplayName("실패")
         class Fail {
 
             @Test
-            @DisplayName("최상위 카테고리 미존재")
+            @DisplayName("최상위 카테고리 조회 안됨")
             void rootCategoryNotExist() {
                 // given
                 rootCategoryId = 1L;
                 detailCategoryId = 1L;
 
-                service = new AdminCategoryServiceImpl(adminCategoryMapper);
 
+                // stubbing
                 doReturn(null)
                         .when(adminCategoryMapper).getRootCategory(rootCategoryId);
 
+
                 // when & then
-                assertThrows(NotFoundException.class, () -> {
+                Exception exception = assertThrows(NotFoundException.class, () -> {
                     service.deleteDetailCategory(rootCategoryId, detailCategoryId);
                 });
+
+                assertEquals("최상위 카테고리가 존재하지 않습니다.", exception.getMessage());
             }
 
             @Test
-            @DisplayName("상세 카테고리 미존재")
-            void detailCategoryNotExist() {
+            @DisplayName("상세 카테고리 조회 안됨")
+            void detailCategoryNotExist(@Mock ProductRootCategory rootCategory) {
                 // given
                 rootCategoryId = 1L;
                 detailCategoryId = 1L;
 
-                service = new AdminCategoryServiceImpl(adminCategoryMapper);
 
-                doReturn(new ProductRootCategory())
+                // stubbing
+                doReturn(rootCategory)
                         .when(adminCategoryMapper).getRootCategory(rootCategoryId);
                 doReturn(null)
                         .when(adminCategoryMapper).getDetailCategory(detailCategoryId);
 
+
                 // when & then
-                assertThrows(NotFoundException.class, () -> {
+                Exception exception = assertThrows(NotFoundException.class, () -> {
                     service.deleteDetailCategory(rootCategoryId, detailCategoryId);
                 });
+
+                assertEquals("상세 카테고리가 존재하지 않습니다.", exception.getMessage());
             }
 
             @Test
-            @DisplayName("최상위 카테고리에 포함되지 않음")
-            void notIncludedInRoot(@Mock ProductDetailCategory detailCategory) {
+            @DisplayName("상세 카테고리가 최상위 카테고리 종류가 아님")
+            void detailNotKindOfRoot(@Mock ProductRootCategory rootCategory, @Mock ProductDetailCategory detailCategory) {
                 // given
                 rootCategoryId = 1L;
                 detailCategoryId = 1L;
 
-                service = new AdminCategoryServiceImpl(adminCategoryMapper);
 
-                doReturn(new ProductRootCategory())
+                // stubbing
+                doReturn(rootCategory)
                         .when(adminCategoryMapper).getRootCategory(rootCategoryId);
-                doReturn(false)
-                        .when(detailCategory).isKindOf(rootCategoryId);
                 doReturn(detailCategory)
                         .when(adminCategoryMapper).getDetailCategory(detailCategoryId);
+                doReturn(false)
+                        .when(detailCategory).same(rootCategoryId);
+
 
                 // when & then
-                assertThrows(PreconditionFailedException.class, () -> {
+                Exception exception = assertThrows(ConflictException.class, () -> {
                     service.deleteDetailCategory(rootCategoryId, detailCategoryId);
                 });
+
+                assertEquals("상세 카테고리가 최상위 카테고리의 종류가 아닙니다.", exception.getMessage());
             }
 
             @Test
             @DisplayName("사용하는 상품이 존재")
-            void productUsingDetailExist(@Mock ProductDetailCategory detailCategory) {
+            void productUsingDetailExist(@Mock ProductRootCategory rootCategory, @Mock ProductDetailCategory detailCategory) {
                 // given
                 rootCategoryId = 1L;
                 detailCategoryId = 1L;
 
-                service = new AdminCategoryServiceImpl(adminCategoryMapper);
 
-                doReturn(new ProductRootCategory())
+                // stubbing
+                doReturn(rootCategory)
                         .when(adminCategoryMapper).getRootCategory(rootCategoryId);
-                doReturn(true)
-                        .when(detailCategory).isKindOf(rootCategoryId);
                 doReturn(detailCategory)
                         .when(adminCategoryMapper).getDetailCategory(detailCategoryId);
+                doReturn(true)
+                        .when(detailCategory).same(rootCategoryId);
 
                 List<Product> products = new ArrayList<>();
                 products.add(new Product());
@@ -761,10 +872,13 @@ class AdminCategoryServiceImplTest {
                 doReturn(products)
                         .when(adminCategoryMapper).getProductsIncludedInDetailCategory(detailCategoryId);
 
+
                 // when & then
-                assertThrows(PreconditionFailedException.class, () -> {
+                Exception exception = assertThrows(ConflictException.class, () -> {
                     service.deleteDetailCategory(rootCategoryId, detailCategoryId);
                 });
+
+                assertEquals("해당 카테고리를 사용하는 상품이 있기 때문에 삭제할 수 없습니다.", exception.getMessage());
             }
         }
     }

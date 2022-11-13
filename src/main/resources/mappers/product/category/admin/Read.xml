@@ -8,37 +8,57 @@
     <select id="getRootCategory" parameterType="long" resultType="com.mokasong.product.entity.ProductRootCategory">
         SELECT *
         FROM `mokasong`.`product_root_categories`
-        WHERE `product_root_category_id` = #{rootCategoryId} AND `is_deleted` = 0
+        WHERE
+            `product_root_category_id` = #{rootCategoryId}
+            AND `is_deleted` = 0
     </select>
 
     <select id="getRootCategoryByName" parameterType="string" resultType="com.mokasong.product.entity.ProductRootCategory">
         SELECT *
         FROM `mokasong`.`product_root_categories`
-        WHERE `name` = #{name} AND `is_deleted` = 0
+        WHERE
+            `name` = #{name}
+            AND `is_deleted` = 0
     </select>
 
     <select id="getDetailCategoryByName" parameterType="string" resultType="com.mokasong.product.entity.ProductDetailCategory">
         SELECT *
         FROM `mokasong`.`product_detail_categories`
-        WHERE `name` = #{name} AND `is_deleted` = 0
+        WHERE
+            `name` = #{name}
+            AND `is_deleted` = 0
+    </select>
+
+    <select id="getDetailCategoryByRootCategoryIdAndName" resultType="com.mokasong.product.entity.ProductDetailCategory">
+        SELECT *
+        FROM `mokasong`.`product_detail_categories`
+        WHERE
+            `product_root_category_id` = #{rootCategoryId}
+            AND `name` = #{name}
+            AND `is_deleted` = 0
     </select>
 
     <select id="getDetailCategory" resultType="com.mokasong.product.entity.ProductDetailCategory">
         SELECT *
         FROM `mokasong`.`product_detail_categories`
-        WHERE `product_detail_category_id` = #{detailCategoryId} AND `is_deleted` = 0
+        WHERE
+            `product_detail_category_id` = #{detailCategoryId}
+            AND `is_deleted` = 0
     </select>
 
     <select id="getDetailCategoriesIncludedInRootCategory" resultType="com.mokasong.product.entity.ProductDetailCategory">
         SELECT *
         FROM `mokasong`.`product_detail_categories`
-        WHERE `product_root_category_id` = #{rootCategoryId} AND `is_deleted` = 0
+        WHERE
+            `product_root_category_id` = #{rootCategoryId}
+            AND `is_deleted` = 0
     </select>
 
     <select id="getProductsIncludedInDetailCategory" resultType="com.mokasong.product.entity.Product">
         SELECT *
         FROM `mokasong`.`products`
-        WHERE `product_detail_category_id` = #{detailCategoryId} <!-- soft delete된 product도 포함해서 조회한다. -->
+        WHERE
+            `product_detail_category_id` = #{detailCategoryId} <!-- soft delete된 product도 포함해서 조회한다. -->
     </select>
 
     <select id="getTotalCountOfRootCategories" resultType="long">
@@ -92,9 +112,9 @@
         FROM `mokasong`.`product_root_categories` `root`
             LEFT JOIN `mokasong`.`product_detail_categories` `detail`
             ON `root`.`product_root_category_id` = `detail`.`product_root_category_id`
+                AND `detail`.`is_deleted` = 0
         WHERE
             `root`.`is_deleted` = 0
-            AND `detail`.`is_deleted` = 0
     </select>
 
     <!-- Result Map -->

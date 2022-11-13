@@ -1,9 +1,12 @@
 package com.mokasong.product.entity;
 
+import com.mokasong.product.dto.request.admin.CreateRootCategoryRequest;
+import com.mokasong.product.dto.request.admin.UpdateRootCategoryRequest;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.Date;
+import java.util.Objects;
 
 @Getter
 @NoArgsConstructor
@@ -14,24 +17,27 @@ public class ProductRootCategory {
     private Date createdAt;
     private Date updatedAt;
 
-    public ProductRootCategory(String name) {
-        this.setName(name);
+    public ProductRootCategory(CreateRootCategoryRequest requestBody) {
+        this.name = requestBody.getName();
     }
 
-    public ProductRootCategory update(String name) {
-        this.setName(name);
+    public ProductRootCategory update(UpdateRootCategoryRequest requestBody) {
+        this.name = requestBody.getName();
         return this;
     }
 
-    public boolean isSame(String name) {
-        return this.name.equals(name);
+    public boolean same(String name) {
+        return Objects.equals(this.name, name);
     }
 
-    public boolean isSame(Long productRootCategoryId) {
-        return this.productRootCategoryId.equals(productRootCategoryId);
-    }
+    public boolean sameEntity(Object object) {
+        if (object == null) {
+            return false;
+        }
+        if (!(object instanceof ProductRootCategory)) {
+            return false;
+        }
 
-    private void setName(String name) {
-        this.name = name;
+        return this.productRootCategoryId.equals(((ProductRootCategory) object).getProductRootCategoryId());
     }
 }

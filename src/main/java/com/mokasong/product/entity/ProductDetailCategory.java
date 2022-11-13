@@ -1,11 +1,12 @@
 package com.mokasong.product.entity;
 
-import com.mokasong.product.dto.request.CreateDetailCategoryRequest;
-import com.mokasong.product.dto.request.UpdateDetailCategoryRequest;
+import com.mokasong.product.dto.request.admin.CreateDetailCategoryRequest;
+import com.mokasong.product.dto.request.admin.UpdateDetailCategoryRequest;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.Date;
+import java.util.Objects;
 
 @Getter
 @NoArgsConstructor
@@ -19,7 +20,7 @@ public class ProductDetailCategory {
 
     public ProductDetailCategory(CreateDetailCategoryRequest requestBody) {
         this.productRootCategoryId = requestBody.getRootCategoryId();
-        this.setName(requestBody.getName());
+        this.name = requestBody.getName();
     }
 
     public ProductDetailCategory update(UpdateDetailCategoryRequest requestBody) {
@@ -28,19 +29,22 @@ public class ProductDetailCategory {
         return this;
     }
 
-    public boolean isKindOf(Long rootCategoryId) {
-        return this.productRootCategoryId.equals(rootCategoryId);
+    public boolean same(Long rootCategoryId) {
+        return Objects.equals(this.productRootCategoryId, rootCategoryId);
     }
 
-    public boolean isSame(Long productDetailCategoryId) {
-        return this.productRootCategoryId.equals(productDetailCategoryId);
+    public boolean same(String name) {
+        return Objects.equals(this.name, name);
     }
 
-    public boolean isSame(String name) {
-        return this.name.equals(name);
-    }
+    public boolean sameEntity(Object object) {
+        if (object == null) {
+            return false;
+        }
+        if (!(object instanceof ProductDetailCategory)) {
+            return false;
+        }
 
-    private void setName(String name) {
-        this.name = name;
+        return this.productDetailCategoryId.equals(((ProductDetailCategory) object).getProductDetailCategoryId());
     }
 }
