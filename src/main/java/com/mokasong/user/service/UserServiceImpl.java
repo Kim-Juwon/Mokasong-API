@@ -28,7 +28,7 @@ import org.thymeleaf.spring5.SpringTemplateEngine;
 import javax.validation.Valid;
 
 import static com.mokasong.common.state.RedisCategory.*;
-import static com.mokasong.common.util.UserHandler.getUser;
+import static com.mokasong.common.util.UserHandler.getLoggedInUser;
 
 @Service
 @Validated
@@ -68,14 +68,14 @@ public class UserServiceImpl implements UserService {
 
         return LoginSuccessResponse.builder()
                 .success(true)
-                .accessToken(jwtHandler.generateToken(user.getUserId(), user.getSecretKey(), 1))
+                .accessToken(jwtHandler.generateToken(user.getUserId(), user.getSecretKey(), 72))
                 .build();
     }
 
     @Override
     @Transactional
     public SuccessfulResponse logout() throws Exception {
-        User user = getUser();
+        User user = getLoggedInUser();
 
         user.changeLastLogoutTimeToNow();
         userMapper.updateUser(user);

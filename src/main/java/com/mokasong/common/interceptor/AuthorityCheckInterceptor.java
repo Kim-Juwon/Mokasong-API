@@ -7,7 +7,6 @@ import com.mokasong.user.entity.User;
 import com.mokasong.user.repository.UserMapper;
 import com.mokasong.common.util.JwtHandler;
 import com.mokasong.user.state.Authority;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -22,7 +21,6 @@ public class AuthorityCheckInterceptor implements HandlerInterceptor {
     private final UserMapper userMapper;
     private final JwtHandler jwtHandler;
 
-    @Autowired
     public AuthorityCheckInterceptor(UserMapper userMapper, JwtHandler jwtHandler) {
         this.userMapper = userMapper;
         this.jwtHandler = jwtHandler;

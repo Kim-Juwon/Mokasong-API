@@ -36,7 +36,7 @@ public class GlobalExceptionHandler {
                     );
         }
 
-        else if (this.isKindOfMessageSendException(e)) {
+        else if (e instanceof NurigoException) {
             // TODO: 알림 코드 작성
 
             return ResponseEntity
@@ -110,21 +110,6 @@ public class GlobalExceptionHandler {
                                     .build()
                     );
         }
-    }
-
-    /**
-     *  net.nurigo.sdk.message.exception.NurigoException은 sub class가 존재하지 않습니다.
-     *  따라서 구체적인 Exception들에 대해 전부 검사합니다.
-     */
-    private boolean isKindOfMessageSendException(Throwable e) {
-        return (e instanceof NurigoApiKeyException)
-            || (e instanceof NurigoBadRequestException)
-            || (e instanceof NurigoEmptyResponseException)
-            || (e instanceof NurigoFileUploadException)
-            || (e instanceof NurigoInvalidApiKeyException)
-            || (e instanceof NurigoMessageNotReceivedException)
-            || (e instanceof NurigoUnknownException)
-            || (e instanceof NurigoUnregisteredSenderIdException);
     }
 
     private boolean isKindOfRequestDataInvalidException(Throwable e) {

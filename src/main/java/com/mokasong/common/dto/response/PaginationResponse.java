@@ -7,5 +7,6 @@ import lombok.experimental.SuperBuilder;
 public abstract class PaginationResponse {
     protected Long totalCount;
     protected Long totalPage;
+    protected Long currentCount;
     protected Long currentPage;
 }

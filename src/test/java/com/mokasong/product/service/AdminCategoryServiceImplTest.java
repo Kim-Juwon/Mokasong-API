@@ -694,7 +694,7 @@ class AdminCategoryServiceImplTest {
 
             @Test
             @DisplayName("최상위 카테고리 조회 안됨")
-            void notFound() {
+            void rootCategoryNotFound() {
                 // given
                 rootCategoryId = 1L;
 

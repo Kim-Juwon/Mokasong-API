@@ -14,4 +14,9 @@ public class ProductImage {
     private Boolean isDeleted;
     private Date createdAt;
     private Date updatedAt;
+
+    public ProductImage(Long productId, String url) {
+        this.productId = productId;
+        this.url = url;
+    }
 }

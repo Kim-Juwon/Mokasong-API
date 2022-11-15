@@ -5,46 +5,251 @@
 
 <mapper namespace="com.mokasong.product.repository.AdminProductMapper">
     <!-- SQL -->
-    <select id="getProductForAdminPage" parameterType="long" resultMap="AdminPageProduct">
-        SELECT *
-        FROM `mokasong`.`products`
-        WHERE `product_id` = #{productId}
-    </select>
-
-    <select id="getRootCategoryIdByDetailCategoryId" parameterType="long" resultType="long">
-        SELECT `product_root_category_id`
-        FROM `mokasong`.`product_detail_categories`
-        WHERE
-            `product_detail_category_id` = #{productDetailCategoryId}
-            AND `is_deleted` = 0
-    </select>
-
-    <select id="getProductImageUrlsByProductId" parameterType="long" resultType="string">
-        SELECT `url`
-        FROM `mokasong`.`product_images`
-        WHERE
-            `product_id` = #{productId}
-            AND `is_deleted` = 0
-    </select>
-
     <select id="getProduct" parameterType="long" resultType="com.mokasong.product.entity.Product">
         SELECT *
         FROM `mokasong`.`products`
         WHERE `product_id` = #{productId}
     </select>
 
+    <select id="getProductForAdminPage" parameterType="long" resultMap="AdminPageProduct">
+        SELECT
+            `p`.`product_id` AS `products.product_id`,
+            `p`.`name` AS `products.name`,
+            `p`.`price` AS `products.price`,
+            `p`.`discounted_price` AS `products.discounted_price`,
+            `p`.`stock` AS `products.stock`,
+            `p`.`is_deleted` AS `products.is_deleted`,
+            `p`.`created_at` AS `products.created_at`,
+            `p`.`updated_at` AS `products.updated_at`,
+            `pdc`.`product_detail_category_id` AS `product_detail_categories.product_detail_category_id`,
+            `pdc`.`product_root_category_id` AS `product_detail_categories.product_root_category_id`,
+            `pdc`.`name` AS `product_detail_categories.name`,
+            `prc`.`product_root_category_id` AS `product_root_categories.product_root_category_id`,
+            `prc`.`name` AS `product_root_categories.name`,
+            `pi`.`url` AS `product_images.url`,
+            `pi`.`created_at` AS `product_images.created_at`
+
+        FROM `mokasong`.`products` `p`
+            LEFT JOIN `mokasong`.`product_detail_categories` `pdc`
+            ON
+                `p`.`product_detail_category_id` = `pdc`.`product_detail_category_id`
+                AND `pdc`.`is_deleted` = 0
+
+            LEFT JOIN `mokasong`.`product_root_categories` `prc`
+            ON
+                `pdc`.`product_root_category_id` = `prc`.`product_root_category_id`
+                AND `prc`.`is_deleted` = 0
+
+            LEFT JOIN `mokasong`.`product_images` `pi`
+            ON
+                `p`.`product_id` = `pi`.`product_id`
+                AND `pi`.`is_deleted` = 0
+
+        WHERE
+            `p`.`product_id` = #{productId}
+    </select>
+
+    <select id="getTotalCountOfProductsByCondition" parameterType="com.mokasong.product.query.admin.ProductsCondition" resultType="long">
+        SELECT COUNT(*)
+        FROM `mokasong`.`products`
+        <!-- 이름 검색 -->
+        <if test="condition.searchString != null">
+            WHERE
+                REPLACE(`name`, ' ', '') LIKE CONCAT('%', REPLACE(#{condition.searchString}, ' ', ''), '%')
+        </if>
+
+        <!-- 카테고리 -->
+        <if test="condition.rootCategoryId != null">
+            <!-- 이름 검색 WHERE절이 있었다면 AND가 선행되어야 한다.-->
+            <choose>
+                <when test="condition.searchString != null">
+                    AND
+                </when>
+                <otherwise>
+                    WHERE
+                </otherwise>
+            </choose>
+
+            `product_detail_category_id`
+            <choose>
+                <!-- detailCategoryId가 있다면 바로 걸러내지만 -->
+                <when test="condition.detailCategoryId != null">
+                    = #{condition.detailCategoryId}
+                </when>
+                <!-- detailCategoryId가 없는 경우 rootCategoryId에 속한 detailCategoryId들에 하나라도 포함된 상품을 가져온다. -->
+                <otherwise>
+                    IN (
+                        SELECT `product_detail_category_id`
+                        FROM `mokasong`.`product_detail_categories`
+                        WHERE
+                            `product_root_category_id` = #{condition.rootCategoryId}
+                            AND `is_deleted` = 0
+                    )
+                </otherwise>
+            </choose>
+        </if>
+
+        <!-- soft delete 여부 -->
+        <if test="condition.isDeleted != null">
+            <!-- 이름 검색 or 카테고리에 대한 WHERE절이 있었다면 AND가 선행되어야 한다. -->
+            <choose>
+                <when test="condition.searchString != null or condition.rootCategoryId != null">
+                    AND
+                </when>
+                <otherwise>
+                    WHERE
+                </otherwise>
+            </choose>
+
+            `is_deleted` =
+            <choose>
+                <when test="condition.isDeleted == true">
+                    1
+                </when>
+                <otherwise>
+                    0
+                </otherwise>
+            </choose>
+        </if>
+    </select>
+
+    <select id="getProductsByCondition" parameterType="com.mokasong.product.query.admin.ProductsCondition"
+            resultType="com.mokasong.product.dto.response.admin.ProductsResponse$Product">
+        SELECT
+            `p`.`product_id` AS `productId`,
+            `p`.`name` AS `name`,
+            `p`.`price` AS `price`,
+            `p`.`stock` AS `stock`,
+            `p`.`is_deleted` AS `isDeleted`,
+            `pdc`.`name` AS `detailCategoryName`,
+            `prc`.`name` AS `rootCategoryName`
+
+        FROM (
+            SELECT *
+            FROM `mokasong`.`products`
+            <!-- 이름 검색 -->
+            <if test="condition.searchString != null">
+                WHERE
+                    REPLACE(`name`, ' ', '') LIKE CONCAT('%', REPLACE(#{condition.searchString}, ' ', ''), '%')
+            </if>
+
+            <!-- 카테고리 -->
+            <if test="condition.rootCategoryId != null">
+                <!-- 이름 검색 WHERE절이 있었다면 AND가 선행되어야 한다.-->
+                <choose>
+                    <when test="condition.searchString != null">
+                        AND
+                    </when>
+                    <otherwise>
+                        WHERE
+                    </otherwise>
+                </choose>
+
+                `product_detail_category_id`
+                <choose>
+                    <!-- detailCategoryId가 있다면 바로 걸러내지만 -->
+                    <when test="condition.detailCategoryId != null">
+                        = #{condition.detailCategoryId}
+                    </when>
+                    <!-- detailCategoryId가 없는 경우 rootCategoryId에 속한 detailCategoryId들에 하나라도 포함된 상품을 가져온다. -->
+                    <otherwise>
+                        IN (
+                            SELECT `product_detail_category_id`
+                            FROM `mokasong`.`product_detail_categories`
+                            WHERE
+                                `product_root_category_id` = #{condition.rootCategoryId}
+                                AND `is_deleted` = 0
+                        )
+                    </otherwise>
+                </choose>
+            </if>
+
+            <!-- soft delete 여부 -->
+            <if test="condition.isDeleted != null">
+                <!-- 이름 검색 or 카테고리에 대한 WHERE절이 있었다면 AND가 선행되어야 한다. -->
+                <choose>
+                    <when test="condition.searchString != null or condition.rootCategoryId != null">
+                        AND
+                    </when>
+                    <otherwise>
+                        WHERE
+                    </otherwise>
+                </choose>
+
+                `is_deleted` =
+                <choose>
+                    <when test="condition.isDeleted == true">
+                        1
+                    </when>
+                    <otherwise>
+                        0
+                    </otherwise>
+                </choose>
+            </if>
+
+            <if test="condition.sort != null">
+                ORDER BY
+                <if test="condition.sort.value == 1">
+                    `created_at` ASC
+                </if>
+                <if test="condition.sort.value == 2">
+                    `price` ASC
+                </if>
+                <if test="condition.sort.value == 3">
+                    `price` DESC
+                </if>
+            </if>
+
+            LIMIT #{begin}, #{condition.limit}
+        ) `p`
+
+        LEFT JOIN `mokasong`.`product_detail_categories` `pdc`
+        ON
+            `p`.`product_detail_category_id` = `pdc`.`product_detail_category_id`
+            AND `pdc`.`is_deleted` = 0
+
+        LEFT JOIN `mokasong`.`product_root_categories` `prc`
+        ON
+            `pdc`.`product_root_category_id` = `prc`.`product_root_category_id`
+            AND `prc`.`is_deleted` = 0
+    </select>
+
+    <select id="getImagesByProductId" parameterType="long" resultType="com.mokasong.product.entity.ProductImage">
+        SELECT *
+        FROM `mokasong`.`product_images`
+        WHERE
+            `product_id` = #{productId}
+            AND `is_deleted` = 0
+    </select>
+
+
     <!-- Result Map -->
     <resultMap id="AdminPageProduct" type="com.mokasong.product.dto.response.admin.ProductResponse$AdminPageProduct">
-        <id property="productId" column="product_id"/>
-        <result property="name" column="name"/>
-        <result property="detailCategoryId" column="product_detail_category_id"/>
-        <result property="price" column="price"/>
-        <result property="discountedPrice" column="discounted_price" />
-        <result property="stock" column="stock"/>
-        <result property="isDeleted" column="is_deleted"/>
-        <result property="createdAt" column="created_at"/>
-        <result property="updatedAt" column="updated_at"/>
-        <association property="rootCategoryId" column="product_detail_category_id" select="getRootCategoryIdByDetailCategoryId"/>
-        <collection property="imageUrls" column="product_id" select="getProductImageUrlsByProductId"/>
+        <id property="productId" column="products.product_id"/>
+        <result property="name" column="products.name"/>
+        <result property="price" column="products.price"/>
+        <result property="discountedPrice" column="products.discounted_price" />
+        <result property="stock" column="products.stock"/>
+        <result property="isDeleted" column="products.is_deleted"/>
+        <result property="createdAt" column="products.created_at"/>
+        <result property="updatedAt" column="products.updated_at"/>
+        <association property="rootCategory" resultMap="RootCategory"/>
+        <association property="detailCategory" resultMap="DetailCategory"/>
+        <collection property="imageUrls" resultMap="ImageUrl"/>
+    </resultMap>
+
+    <resultMap id="RootCategory" type="com.mokasong.product.dto.response.admin.ProductResponse$RootCategory">
+        <id property="rootCategoryId" column="product_root_categories.product_root_category_id"/>
+        <result property="name" column="product_root_categories.name"/>
+    </resultMap>
+
+    <resultMap id="DetailCategory" type="com.mokasong.product.dto.response.admin.ProductResponse$DetailCategory">
+        <id property="detailCategoryId" column="product_detail_categories.product_detail_category_id"/>
+        <result property="rootCategoryId" column="product_detail_categories.product_root_category_id"/>
+        <result property="name" column="product_detail_categories.name"/>
+    </resultMap>
+
+    <resultMap id="ImageUrl" type="string">
+        <result property="imageUrl" column="product_images.url"/>
     </resultMap>
 </mapper>
