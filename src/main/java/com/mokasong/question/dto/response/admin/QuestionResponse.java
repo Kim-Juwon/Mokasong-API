@@ -18,9 +18,15 @@ public class QuestionResponse {
         private Writer writer;
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
         private Date createdAt;
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
+        private Date updatedAt;
+        private Boolean isSecret;
         private String content;
         private Boolean answered;
-        private Boolean isDeleted;
+
+        public boolean writerNotExists() {
+            return this.writer == null;
+        }
 
         public void decideAnswered(QuestionAnswer questionAnswer) {
             this.answered = (questionAnswer != null);

@@ -1,33 +1,44 @@
 package com.mokasong.question.service;
 
 import com.mokasong.common.dto.response.SuccessfulResponse;
-import com.mokasong.common.exception.custom.ConflictException;
+import com.mokasong.common.exception.custom.InternalServerErrorException;
 import com.mokasong.common.exception.custom.NotFoundException;
 import com.mokasong.question.dto.response.admin.QuestionResponse;
-import com.mokasong.question.entity.Question;
+import com.mokasong.question.dto.response.admin.QuestionsResponse;
 import com.mokasong.question.entity.QuestionAnswer;
+import com.mokasong.question.query.QuestionsCondition;
+import com.mokasong.question.repository.AdminAnswerMapper;
 import com.mokasong.question.repository.AdminQuestionMapper;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
-public class AdminQuestionServiceImpl implements AdminQuestionService {
-    private final AdminQuestionMapper adminQuestionMapper;
+import java.util.List;
 
-    public AdminQuestionServiceImpl(AdminQuestionMapper adminQuestionMapper) {
-        this.adminQuestionMapper = adminQuestionMapper;
-    }
+import static com.mokasong.common.exception.ErrorCode.INTERNAL_SERVER_ERROR;
+
+@Service
+@Transactional
+@RequiredArgsConstructor
+public class AdminQuestionServiceImpl implements AdminQuestionService {
+    private final AdminQuestionMapper questionMapper;
+    private final AdminAnswerMapper answerMapper;
 
     @Override
     @Transactional(readOnly = true)
     public QuestionResponse getQuestion(Long questionId) throws Exception {
-        QuestionResponse.AdminPageQuestion question = adminQuestionMapper.getQuestionForAdminPage(questionId);
+        QuestionResponse.AdminPageQuestion question = questionMapper.getQuestionForAdminPage(questionId);
 
         if (question == null) {
-            throw new NotFoundException("없는 문의입니다.", 1);
+            throw new NotFoundException("문의가 존재하지 않습니다.", 1);
         }
 
-        QuestionAnswer answer = adminQuestionMapper.getQuestionAnswerByQuestionId(questionId);
+        // 회원 탈퇴시 해당 회원이 작성한 문의도 전부 soft delete 되므로, 만약 문의가 조회되는데 작성자가 없다면 모순이다.
+        if (question.writerNotExists()) {
+            throw new InternalServerErrorException("작성자 정보가 없거나 탈퇴하였습니다.", INTERNAL_SERVER_ERROR.getErrorCode());
+        }
+
+        QuestionAnswer answer = answerMapper.getAnswerByQuestionId(questionId);
 
         // 답변 여부 확인
         question.decideAnswered(answer);
@@ -38,44 +49,39 @@ public class AdminQuestionServiceImpl implements AdminQuestionService {
     }
 
     @Override
-    @Transactional
-    public SuccessfulResponse deleteQuestion(Long questionId) throws Exception {
-        Question question = checkQuestionExists(questionId, 1);
+    @Transactional(readOnly = true)
+    public QuestionsResponse getQuestions(QuestionsCondition condition) throws Exception {
+        Long totalCount = questionMapper.getTotalCountOfQuestionsByCondition(condition);
+        Long totalPage = condition.extractTotalPage(totalCount);
+        Long currentPage = condition.getPage();
 
-        if (question.getIsDeleted()) {
-            throw new ConflictException("이미 soft delete 되어있는 문의입니다.", 2);
+        if (currentPage > totalPage) {
+            throw new NotFoundException("유효하지 않은 페이지입니다.", 1);
         }
 
-        adminQuestionMapper.deleteQuestion(questionId);
+        List<QuestionsResponse.Question> questions = questionMapper.getQuestionsByCondition(condition.extractBegin(), condition);
 
-        return SuccessfulResponse.builder()
-                .success(true)
+        return QuestionsResponse.builder()
+                .totalCount(totalCount)
+                .totalPage(totalPage)
+                .currentCount((long) questions.size())
+                .currentPage(currentPage)
+                .questions(questions)
                 .build();
     }
 
     @Override
-    @Transactional
-    public SuccessfulResponse undeleteQuestion(Long questionId) throws Exception {
-        Question question = checkQuestionExists(questionId, 1);
-
-        if (!question.getIsDeleted()) {
-            throw new ConflictException("soft delete 되어있는 문의가 아닙니다.", 2);
+    public SuccessfulResponse deleteQuestion(Long questionId) throws Exception {
+        if (questionMapper.getQuestion(questionId) == null) {
+            throw new NotFoundException("문의가 존재하지 않습니다.", 1);
         }
 
-        adminQuestionMapper.undeleteQuestion(questionId);
+        questionMapper.deleteQuestion(questionId);
+
+        answerMapper.deleteAnswerByQuestionId(questionId);
 
         return SuccessfulResponse.builder()
                 .success(true)
                 .build();
-    }
-
-    private Question checkQuestionExists(Long questionId, Integer errorCode) {
-        Question question = adminQuestionMapper.getQuestion(questionId);
-
-        if (question == null) {
-            throw new NotFoundException("없는 문의입니다.", errorCode);
-        }
-
-        return question;
     }
 }

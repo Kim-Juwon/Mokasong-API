@@ -14,17 +14,25 @@ import java.util.List;
 public interface AdminProductMapper {
     // Create
     void createProduct(@Param("product") Product product);
+
     void createProductImages(@Param("productImages") List<ProductImage> productImages);
+
 
     // Read
     ProductResponse.AdminPageProduct getProductForAdminPage(@Param("productId") Long productId);
+
     Product getProduct(@Param("productId") Long productId);
+
     Long getTotalCountOfProductsByCondition(@Param("condition") ProductsCondition condition);
+
     List<ProductsResponse.Product> getProductsByCondition(@Param("begin") Long begin, @Param("condition") ProductsCondition condition);
+
     List<ProductImage> getImagesByProductId(@Param("productId") Long productId);
+
 
     // Update
     void updateProduct(@Param("product") Product product);
+
 
     // Delete
     void deleteProduct(@Param("productId") Long productId);

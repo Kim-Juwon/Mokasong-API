@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mokasong.question.repository.AdminQuestionMapper">
+    <!-- SQL -->
+    <select id="getQuestionForAdminPage" parameterType="long" resultMap="AdminPageQuestion">
+        SELECT
+            `q`.`question_id` AS `question.question_id`,
+            `q`.`title` AS `question.title`,
+            `q`.`created_at` AS `question.created_at`,
+            `q`.`updated_at` AS `question.updated_at`,
+            `q`.`is_secret` AS `question.is_secret`,
+            `q`.`content` AS `question.content`,
+            `u`.`user_id` AS `user.user_id`,
+            `u`.`email` AS `user.email`,
+            `u`.`name` AS `user.name`
+
+        FROM `mokasong`.`questions` `q`
+             LEFT JOIN `mokasong`.`users` `u`
+             ON
+                 `q`.`user_id` = `u`.`user_id`
+                 AND `u`.`is_deleted` = 0
+
+        WHERE
+            `q`.`question_id` = #{questionId}
+            AND `q`.`is_deleted` = 0
+    </select>
+
+    <select id="getQuestion" parameterType="long" resultType="com.mokasong.question.entity.Question">
+        SELECT *
+        FROM `mokasong`.`questions`
+        WHERE
+            `question_id` = #{questionId}
+            AND `is_deleted` = 0
+    </select>
+
+    <select id="getTotalCountOfQuestionsByCondition" parameterType="com.mokasong.question.query.QuestionsCondition" resultType="long">
+        SELECT COUNT(*)
+        FROM `mokasong`.`questions`
+        WHERE
+            `is_deleted` = 0
+
+        <!-- 제목 검색이 필요하다면 WHERE절에 추가 -->
+        <if test="condition.searchTitle != null">
+            AND REPLACE(`title`, ' ', '') LIKE CONCAT('%', REPLACE(#{condition.searchTitle}, ' ', ''), '%')
+        </if>
+
+        <!-- 답변 여부 필터링이 필요하다면 WHERE절에 추가 -->
+        <if test="condition.answered != null">
+            AND `question_id`
+
+            <if test="condition.answered.equals(false)">
+                NOT
+            </if>
+            IN (
+                SELECT `question_id`
+                FROM `mokasong`.`question_answers`
+                WHERE `is_deleted` = 0
+            )
+        </if>
+    </select>
+
+    <select id="getQuestionsByCondition" parameterType="com.mokasong.question.query.QuestionsCondition"
+            resultType="com.mokasong.question.dto.response.admin.QuestionsResponse$Question">
+        SELECT
+            `q`.`question_id` AS `questionId`,
+            `q`.`title` AS `title`,
+            `u`.`email` AS `emailOfWriter`,
+            `q`.`created_at` AS `createdAt`,
+            `q`.`updated_at` AS `updatedAt`
+
+        FROM (  SELECT *
+                FROM `mokasong`.`questions`
+                WHERE
+                    `is_deleted` = 0
+
+                <!-- 제목 검색이 필요하다면 WHERE절에 추가 -->
+                <if test="condition.searchTitle != null">
+                    AND REPLACE(`title`, ' ', '') LIKE CONCAT('%', REPLACE(#{condition.searchTitle}, ' ', ''), '%')
+                </if>
+
+                <!-- 답변 여부 필터링이 필요하다면 WHERE절에 추가 -->
+                <if test="condition.answered != null">
+                    AND `question_id`
+
+                    <if test="condition.answered.equals(false)">
+                        NOT
+                    </if>
+                    IN (
+                        SELECT `question_id`
+                        FROM `mokasong`.`question_answers`
+                        WHERE `is_deleted` = 0
+                    )
+                </if>
+        ) `q`
+
+            LEFT JOIN `mokasong`.`users` `u`
+            ON
+                `q`.`user_id` = `u`.`user_id`
+                AND `u`.`is_deleted` = 0
+
+        LIMIT #{begin}, #{condition.limit}
+    </select>
+
+    <!-- Result Map -->
+    <resultMap id="AdminPageQuestion" type="com.mokasong.question.dto.response.admin.QuestionResponse$AdminPageQuestion">
+        <id property="questionId" column="question.question_id"/>
+        <result property="title" column="question.title"/>
+        <result property="createdAt" column="question.created_at"/>
+        <result property="updatedAt" column="question.updated_at" />
+        <result property="isSecret" column="question.is_secret"/>
+        <result property="content" column="question.content"/>
+        <association property="writer" resultMap="Writer"/>
+    </resultMap>
+
+    <resultMap id="Writer" type="com.mokasong.question.dto.response.admin.QuestionResponse$Writer">
+        <id property="userId" column="user.user_id"/>
+        <result property="email" column="user.email"/>
+        <result property="name" column="user.name" />
+    </resultMap>
+</mapper>
